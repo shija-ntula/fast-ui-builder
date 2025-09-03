@@ -1,0 +1,54 @@
+{
+  "name": "fast-ui-builder",
+  "version": "1.0.0",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev:core": "tsup src/index.ts --watch --format esm --dts --out-dir dist",
+    "dev:vue": "vite build --config vite.config.vue.ts --outDir dist/vue --watch",
+    "dev:react": "vite build --config vite.config.react.ts --outDir dist/react --watch",
+    "dev": "npm-run-all --parallel dev dev:vue dev:react",
+    "build:core": "tsup src/index.ts --format esm,cjs --dts --out-dir dist",
+    "build:vue": "vite build --config vite.config.vue.ts --outDir dist/vue",
+    "build:react": "vite build --config vite.config.react.ts --outDir dist/react",
+    "build": "npm run build && npm run build:vue && npm run build:react"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.mjs"
+    },
+    "./vue": {
+      "import": "./dist/vue/index.mjs",
+      "require": "./dist/vue/index.mjs"
+    },
+    "./react": {
+      "import": "./dist/react/index.mjs",
+      "require": "./dist/react/index.mjs"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "vite-plugin-dts": "^4.5.4",
+    "vue": "^3.5.18",
+    "vue-tsc": "^3.0.5"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.0.1",
+    "reflect-metadata": "^0.2.2"
+  }
+}

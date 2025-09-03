@@ -1,0 +1,42 @@
+import { Component } from 'vue';
+export type DataTableComponents = {
+    wrapper?: string | Component;
+    table?: string | Component;
+    thead?: string | Component;
+    tbody?: string | Component;
+    row?: string | Component;
+    headerRow?: string | Component;
+    headerCell?: string | Component;
+    cell?: string | Component;
+    headerWrapper?: string | Component;
+    searchWrapper?: string | Component;
+    actionsWrapper?: string | Component;
+    searchInput?: string | Component;
+    button?: string | Component;
+    select?: string | Component;
+    paginationWrapper?: string | Component;
+};
+export type DataTableClasses = {
+    wrapper?: string;
+    title?: string;
+    table?: string;
+    thead?: string;
+    tbody?: string;
+    row?: string;
+    headerRow?: string;
+    headerCell?: string;
+    cell?: string;
+    headerWrapper?: string;
+    searchWrapper?: string;
+    searchInput?: string;
+    actionsWrapper?: string;
+    button?: string;
+    select?: string;
+    paginationWrapper?: string;
+    pageSize?: string;
+    pageControls?: string;
+};
+export type DataTableTheme = {
+    classes?: DataTableClasses;
+    components?: DataTableComponents;
+};

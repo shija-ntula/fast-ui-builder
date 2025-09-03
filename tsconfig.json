@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ESNext", "DOM"],
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "declarationDir": "dist-old/types",
+    "outDir": "dist-old",
+    "baseUrl": ".",
+    "types": ["node"],
+    "experimentalDecorators": true,
+    "useDefineForClassFields": true,
+    "emitDecoratorMetadata": true,
+    "rootDir": "src",
+  },
+  "include": ["src"]
+}
