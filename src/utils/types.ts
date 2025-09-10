@@ -14,6 +14,8 @@ export interface FormFieldDef {
   field: string;
   label: string;
   type: "text" | "number" | "select" | "date" | "textarea" | "checkbox";
+  grid?: number;
+  hidden?: boolean;
   required?: boolean;
   noCreate?: boolean;
   noUpdate?: boolean;

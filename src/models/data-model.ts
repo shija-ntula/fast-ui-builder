@@ -1,10 +1,15 @@
-import { ColumnProps, getColumnMetadata, getFieldMetadata } from "./decorators";
+import { ColumnProps, FieldProps, getColumnMetadata, getFieldMetadata } from "./decorators";
 import { toTitle } from "../utils/helpers";
 import { getGraphQLFields } from "../apis/graphql/schemas";
 import { BuiltInAction } from "../utils/types";
 
 export abstract class DataModel<T> {
   @ColumnProps({ hidden: true })
+  @FieldProps({
+    label: "ID",
+    type: "number",
+    hidden: true
+  })
   id!: string | string
 
   // @FieldProps({order: 99})
@@ -52,10 +57,10 @@ export abstract class DataModel<T> {
     const meta = getColumnMetadata(this);
 
     for (const [field, opts] of Object.entries(meta)) {
-      if (!opts.hidden && field in json) {
+      // if (!opts.hidden && field in json) {
         // @ts-ignore
         instance[field] = json[field];
-      }
+      // }
     }
 
     return instance;
@@ -122,11 +127,12 @@ export abstract class DataModel<T> {
       ))
       .map(([field, opts]) => ({
         field,
+        ...opts,
         label: opts.label || toTitle(field),
-        type: opts.type,
-        required: opts.required,
-        options: opts.options,
-        placeholder: opts.placeholder
+        // type: opts.type,
+        // required: opts.required,
+        // options: opts.options,
+        // placeholder: opts.placeholder
       }));
   }
 }

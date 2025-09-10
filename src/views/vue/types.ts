@@ -44,7 +44,7 @@ export type DataTableTheme = {
   components?: DataTableComponents;
 };
 
-export interface ModalTheme {
+export type ModalTheme = {
   components?: {
     wrapper?: string | object;
     overlay?: string | object;
@@ -65,4 +65,17 @@ export interface ModalTheme {
     footer?: string;
     button?: string;
   };
+}
+
+export type ModalProps = {
+  theme?: ModalTheme;
+  modelValue?: boolean;
+  title?: string;
+  closeable?: boolean;
+  closeOnBackdrop?: boolean;
+  closeOnEscape?: boolean;
+  maxWidth?: string;
+  persistent?: boolean;
+  showCloseButton?: boolean;
+  zIndex?: number;
 }

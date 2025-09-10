@@ -19,6 +19,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     export: true
   };
 
+  static gridWidth: number = 12
+
   service: CRUDService<T, typeof CRUDModel>;
   api: ApiInterface
 
@@ -58,10 +60,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                         `${(this.constructor as typeof CRUDModel).getModelName()}Create`, 
                         Array.isArray(data), 
                         (this.constructor as typeof CRUDModel).getGraphqlFields(),
-
                       ),
-                      Array.isArray(data) ? data.map((item) => item.toJson(BuiltInAction.Create)) 
-                                          : data.toJson(BuiltInAction.Create)
+                      data
                     )
     } else if (this.api instanceof RestApi) {
       const result = await (this.api as RestApi).create(data) 
@@ -70,8 +70,23 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     return {status: false, data: null}
   }
 
-  async update(data: Partial<T>): Promise<T> {
-    return await this.service.update(data)
+  async update(data: T | T[]): Promise<{status: boolean, data: T | T[] | null}> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).mutate(
+                      `update${(this.constructor as typeof CRUDModel).getModelName()}`,
+                      getMutationSchema(
+                        `update${(this.constructor as typeof CRUDModel).getModelName()}`, 
+                        `${(this.constructor as typeof CRUDModel).getModelName()}Update`, 
+                        Array.isArray(data), 
+                        (this.constructor as typeof CRUDModel).getGraphqlFields(),
+                      ),
+                      data
+                    )
+    } else if (this.api instanceof RestApi) {
+      const result = await (this.api as RestApi).create(data) 
+    }
+
+    return {status: false, data: null}
   }
 
   async delete(id: number | string): Promise<boolean> {

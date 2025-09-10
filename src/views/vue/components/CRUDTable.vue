@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, defineProps, watch, reactive } from 'vue';
+import { ref, onMounted, defineProps, watch, reactive, computed } from 'vue';
 import DataTable from './DataTable.vue';
 import { defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
 import { BuiltInAction, ColumnDef, DynamicAction, Pagination } from '../../../utils/types';
 import { toTitle } from '../../../utils/helpers';
 import { get } from 'http';
 import { DataTableTheme } from '../types';
+import CRUDModal from './CRUDModal.vue';
 
 const props = defineProps<{
   theme?: DataTableTheme;
@@ -18,7 +19,11 @@ const props = defineProps<{
   rowActions?: DynamicAction[];
   columns?: ColumnDef[];
   showCount?: boolean;
+  reload?: boolean;
   onLoading?: (isLoading: boolean) => void;
+  onCreate?: (model: typeof props.resource) => void;
+  onUpdate?: (model: typeof props.resource) => void;
+  onDelete?: (id: number | string) => void;
 }>();
 
 const loading = ref(true);
@@ -28,17 +33,29 @@ watch(loading, (val) => {
     props.onLoading(val);
 });
 
+const emit = defineEmits<{
+  "update:reload": [value: boolean];
+}>();
+
+const reloadTable = computed(() => props.reload)
+
 // Action callbacks
 const onCreate = () => {
-  alert('Create');
+  if(props.onCreate){
+    props.onCreate(new props.resource())
+  }
 }
 
-const onUpdate = (model: typeof props.resource) => {
-  alert('Update');
+const onUpdate = (model: Record<string, any>) => {
+  if(props.onUpdate){
+    props.onUpdate(props.resource.fromJson(model))
+  }
 }
 
-const onDelete = (id: number | string) => {
-  alert('Delete');
+const onDelete = (model: Record<string, any>) => {
+  if(props.onDelete){
+    props.onDelete(props.resource.fromJson(model))
+  }
 }
 
 const actionHandlers: Record<string, (...args: any[]) => void> = {
@@ -120,7 +137,7 @@ const rowActions = ref(
     ...getRowActions(),
     ...(props.rowActions || [])
   ].map((action) => (
-    { label: action.label, onClick: () => actionHandlers[action.action]() }
+    { label: action.label, onClick: (data: any) => actionHandlers[action.action](data) }
   ))
 );
 
@@ -181,11 +198,40 @@ onMounted(fetchData);
 
 // Re-fetch if resource changes dynamically
 watch(() => props.resource, fetchData);
+
+// Re-fetch if reload  is true
+watch(() => props.reload, async (val) => {
+  if (val) {
+    emit("update:reload", false)
+    await fetchData();
+  }
+});
+
+// Modal
+const isModalOpen = ref(false);
+const customTheme = {
+  components: {
+    modal: 'article',
+    header: 'header',
+    title: 'h1',
+    closeButton: 'span'
+  },
+  classes: {
+    wrapper: 'custom-modal-wrapper',
+    modal: 'custom-modal',
+    header: 'custom-modal-header',
+    title: 'custom-modal-title',
+    closeButton: 'custom-close-btn',
+    body: 'custom-modal-body',
+    footer: 'custom-modal-footer'
+  }
+};
+
+
 </script>
 
 <template>
   <div>
-    <!-- <div v-if="loading" class="datatable-loading">Loading...</div> -->
     <DataTable
       :theme="props.theme"
       :title="props.title === undefined? `${props.resource.getModelTitle()} List` : props.title"
