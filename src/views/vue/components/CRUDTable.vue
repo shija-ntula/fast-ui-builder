@@ -24,6 +24,8 @@ const props = defineProps<{
   onCreate?: (model: typeof props.resource) => void;
   onUpdate?: (model: typeof props.resource) => void;
   onDelete?: (id: number | string) => void;
+  getTemplate?: () => Promise<boolean>;
+  importTemplate?: () => Promise<boolean>;
 }>();
 
 const loading = ref(true);
@@ -58,18 +60,73 @@ const onDelete = (model: Record<string, any>) => {
   }
 }
 
+const getTemplate = () => {
+  if(props.getTemplate){
+    props.getTemplate()
+  } else {
+    (new props.resource()).getTemplate()
+  }
+}
+
+const importTemplate = async () => {
+  if(props.importTemplate){
+    await props.importTemplate()
+  } else {
+    // Create hidden input
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "*/*"; // optional: restrict types e.g. ".pdf,.docx,image/*"
+    input.style.display = "none";
+
+    // When user picks a file
+    input.onchange = async (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) return;
+
+      const file = target.files[0];
+      console.log("Selected file:", file.name);
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        loading.value = true;
+        const imported = await (new props.resource()).importTemplate(formData);
+        loading.value = false;
+
+        if(imported){
+          emit("update:reload", true)
+          fetchData()
+        }
+
+        console.log("Upload success:");
+      } catch (error) {
+        console.error("Upload error:", error);
+      }
+    };
+
+    // Trigger file picker
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+  }
+}
+
 const actionHandlers: Record<string, (...args: any[]) => void> = {
   [BuiltInAction.Create]: onCreate,
   [BuiltInAction.Update]: onUpdate,
-  [BuiltInAction.Delete]: onDelete
+  [BuiltInAction.Delete]: onDelete,
+  [BuiltInAction.Template]: getTemplate,
+  [BuiltInAction.Import]: importTemplate
 };
 
 const getTableActions = () => {
   const tableActions = []
 
   if (props.resource.features.import) {
-    tableActions.push({label: 'Template', action: BuiltInAction.Create});
-    tableActions.push({label: 'Import', action: BuiltInAction.Create});
+    tableActions.push({label: 'Template', action: BuiltInAction.Template});
+    tableActions.push({label: 'Import', action: BuiltInAction.Import});
   }
 
   if (props.resource.features.export) {
@@ -170,10 +227,12 @@ async function fetchData() {
   loading.value = true;
   try {
     const instance = new props.resource();
-    const { items, itemCount} = await instance.fetchAll(paginationParams);
+    const data = await instance.fetchAll(paginationParams);
 
-    dataItems.value = items;
-    pagination.total = itemCount;
+    if(data?.itemCount){
+      dataItems.value = data.items;
+      pagination.total = data.itemCount;
+    }
 
   } finally {
     loading.value = false;

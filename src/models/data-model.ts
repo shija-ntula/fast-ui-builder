@@ -44,11 +44,32 @@ export abstract class DataModel<T> {
   
   // Create graphql schema
   static getGraphqlFields(): string {
-    return getGraphQLFields(
-      Object.entries(
-        getColumnMetadata(this)).map(([field, opts]) => ({
-        field
-      })));
+    const metas = getColumnMetadata(this)
+    const fields = []
+
+    for (const [field, opts] of Object.entries(metas)) {
+      if (opts.displayFields) {
+        fields.push({ field: `${field}.id` });
+        if(opts.displayFields){
+          for (const displayField of opts.displayFields) {
+            fields.push({ field: `${field}.${displayField}` });
+          }
+        }
+      } else {
+        fields.push({ field });
+      }
+    }
+
+    return getGraphQLFields(fields);
+
+    // return getGraphQLFields(
+    //   Object.entries(
+    //     getColumnMetadata(this)).map(([field, opts]) => {
+
+    //       return {
+    //         field: field + ((typeof this[field]) instanceof DataModel ? 'Id' : '')
+    //       }
+    // }));
   }
 
   // Deserialize and return a new instance
@@ -73,6 +94,10 @@ export abstract class DataModel<T> {
     return '/' + className
       .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
       .toLowerCase();
+  }
+  
+  getEndpointPlural(): string {
+    return this.getEndpoint() + 's';
   }
 
 
@@ -111,6 +136,7 @@ export abstract class DataModel<T> {
         field,
         header: opts.header || toTitle(field),
         hidden: opts.hidden,
+        displayFields: opts.displayFields,
         order: opts.order,
         headerClass: opts.headerClass,
         rowClass: opts.rowClass,
@@ -129,10 +155,6 @@ export abstract class DataModel<T> {
         field,
         ...opts,
         label: opts.label || toTitle(field),
-        // type: opts.type,
-        // required: opts.required,
-        // options: opts.options,
-        // placeholder: opts.placeholder
       }));
   }
 }

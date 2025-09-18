@@ -12,6 +12,8 @@ export * from './apis/rest/api'
 export * from './apis/graphql/api'
 
 export let activeApi: ApiInterface;
+export let baseUrl: string;
+export let accessTokenHeader: Record<string, string>;
 
 export function setApi(api: ApiInterface) {
   activeApi = api;
@@ -19,4 +21,12 @@ export function setApi(api: ApiInterface) {
 
 export function getApi(): ApiInterface {
   return activeApi;
+}
+
+export function setBaseUrl(url: string) {
+  baseUrl = url;
+}
+
+export function setAccessTokenHeader(token: Record<string, string>) {
+  accessTokenHeader = token;
 }

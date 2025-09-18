@@ -1,8 +1,9 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
 import { CRUDService } from '../services/crud-service'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction } from '../index'
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader } from '../index'
 import { createQueryWithFilters, getMutationSchema } from '../apis/graphql/schemas';
+import axios from 'axios';
 
 export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   
@@ -33,7 +34,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
       api || activeApi
     );
   }
-  async fetchAll(paginationParams: PaginationParams = defaultParams, options: any): Promise<{itemCount: number, items: T[]}> {
+  async fetchAll(paginationParams: PaginationParams = defaultParams, options: any): Promise<{itemCount: number, items: T[]} | null> {
     if (this.api instanceof GraphQLApi) {
       return await (this.api as GraphQLApi).query(
                       `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`,
@@ -48,7 +49,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
       const result = await (this.api as RestApi).get(paginationParams) 
     }
 
-    return {itemCount: 0, items: []}
+    return null
   }
 
   async create(data: T | T[]): Promise<{status: boolean, data: T | T[] | null}> {
@@ -92,16 +93,69 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   async delete(id: number | string): Promise<boolean> {
     return await this.service.delete(id)
   }
+
+  async getTemplate(): Promise<boolean> {
+    try {
+      const response = await axios.get(
+        `${baseUrl}${this.getEndpointPlural()}/template`,
+        {
+          responseType: "blob", // important for binary data
+          headers: {
+            ...accessTokenHeader,
+          },
+        }
+      );
+
+      // Extract filename from Content-Disposition header
+      let filename = `${(this.constructor as typeof CRUDModel).getModelNamePlural()}.csv`;
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename); // use server-provided name
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // cleanup
+      return true;
+    } catch (error) {
+      console.error(
+        `Error downloading template of ${(this.constructor as typeof CRUDModel).getModelName()}:`,
+        error
+      );
+      return false;
+    }
+  }
+
+  async importTemplate(formData: FormData): Promise<boolean> {
+    try {
+      const response = await axios.post(
+        `${baseUrl}${this.getEndpointPlural()}/upload`,
+        formData,
+        {
+          headers: {
+            ...accessTokenHeader,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Upload success:", response.data);
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
+    return true
+  }
 }
 
 type SortOrder = "asc" | "desc";
 
-interface Search {
+type Search = {
   field: string;
   value: string;
 }
 
-interface Filter {
+type Filter = {
   field: string;
   comparator: string;
   value: any;
@@ -112,11 +166,28 @@ export class PaginationParams {
   pageSize: number = 10;
   sortBy?: string;
   sortOrder?: SortOrder;
-  search?: Search;
+  searchColumns: string[] = [];
+  searchQuery?: string
   filters?: Filter[];
 
   constructor(init?: Partial<PaginationParams>) {
     Object.assign(this, init);
+  }
+
+  /**
+   * Add a search column if it's not already in the list.
+   */
+  addSearchColumn(column: string): void {
+    if (!this.searchColumns.includes(column)) {
+      this.searchColumns.push(column);
+    }
+  }
+
+  /**
+   * Remove a search column if it exists.
+   */
+  removeSearchColumn(column: string): void {
+    this.searchColumns = this.searchColumns.filter(c => c !== column);
   }
 }
 

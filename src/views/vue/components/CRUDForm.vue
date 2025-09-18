@@ -2,6 +2,7 @@
 import { ref, defineProps, defineEmits, watch, computed, Component } from "vue";
 import { BuiltInAction, type FormFieldDef } from "../../../utils/types";
 import { type CRUDModel } from "src/models/crud-model";
+import { enumToOptions } from "../../../utils/helpers";
 
 // Define a generic interface for your props
 interface Props<T extends CRUDModel<T>> {
@@ -16,11 +17,13 @@ type DefaultModel = any; // or use a base interface
 const props = defineProps<{
   modelValue?: CRUDModel<any>;
   textComponent?: Component;
+  enumComponent?: Component;
+  selectComponent?: Component;
+  dateComponent?: Component;
   formComponent?: Component;
 }>();
 
 const fields = computed<FormFieldDef[]>(() => {
-  console.log("FIELDS",props.modelValue?.constructor.getFields(BuiltInAction.Create))
   return props.modelValue?.constructor.getFields(BuiltInAction.Create).filter((f: FormFieldDef) => !f.hidden) || [];
 })
 
@@ -63,7 +66,7 @@ const onSubmit = async () => {
     <div v-for="field in fields" :key="field.field">
       <!-- Text/Number/Date -->
       
-      <div v-if="['text','number','date'].includes(field.type)" >
+      <div v-if="['text','number'].includes(field.type)" >
         <component 
           v-if="textComponent"
           :is="textComponent" 
@@ -84,6 +87,72 @@ const onSubmit = async () => {
           />
         </div>
       </div>
+      
+      <div v-else-if="['enum'].includes(field.type) && field.resource" >
+        <component 
+          v-if="enumComponent"
+          :is="enumComponent" 
+          v-bind="{ 
+            ...field, 
+            placeholder: field.placeholder || `Select ${field.label}`
+          }"
+          v-model="formState[field.field]"
+        />
+        <div v-else class="form-field">
+          <label :for="field.field">{{ field.label }}</label>
+          <select
+            :id="field.field" v-model="formState[field.field]" 
+            :placeholder="field.placeholder" 
+            :required="field.required"
+          >
+            <option v-for="entry in enumToOptions(field.resource)" :value="entry.value" :key="entry.value">{{ entry.label }}</option>
+          </select>
+        </div>
+      </div>
+      
+      <div v-else-if="['select'].includes(field.type) && field.resource" >
+        <component 
+          v-if="selectComponent"
+          :is="selectComponent" 
+          v-bind="{ 
+            ...field, 
+            placeholder: field.placeholder || `Select ${field.label}`
+          }"
+          v-model="formState[field.field]"
+        />
+        <div v-else class="form-field">
+          <label :for="field.field">{{ field.label }}</label>
+          <select
+            :id="field.field" v-model="formState[field.field]" 
+            :placeholder="field.placeholder" 
+            :required="field.required"
+          >
+            <option v-for="entry in enumToOptions(field.resource)" :value="entry.value" :key="entry.value">{{ entry.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div v-if="['date'].includes(field.type)" >
+        <component 
+          v-if="dateComponent"
+          :is="dateComponent" 
+          v-bind="{ 
+            ...field, 
+            placeholder: field.placeholder || `Choose ${field.label}`
+          }"
+          v-model="formState[field.field]"
+        />
+        <div v-else class="form-field">
+          <label :for="field.field">{{ field.label }}</label>
+          <input
+            type="date"
+            :id="field.field" v-model="formState[field.field]" 
+            :placeholder="field.placeholder" 
+            :required="field.required"
+          />
+        </div>
+      </div>
+
     </div>
     <!-- <div v-for="field in fields" :key="field.field" class="form-field"> -->
       

@@ -3,23 +3,25 @@ export interface ColumnDefOptions {
   field: string;
   hidden?: boolean;
   header?: string;
+  displayFields?: string[];
   headerClass?: string;
   rowClass?: string;
   order?: number;
   enum?: Record<string, string | number>;
-  format?: (value: any) => string;
+  format?: Function | undefined;
 }
 
 export interface FormFieldDef {
   field: string;
   label: string;
+  displayFields?: string[];
   type: "text" | "number" | "select" | "date" | "textarea" | "checkbox";
   grid?: number;
   hidden?: boolean;
   required?: boolean;
   noCreate?: boolean;
   noUpdate?: boolean;
-  options?: { label: string; value: any }[]; // for selects
+  resource?: any; // for selects
   placeholder?: string;
 }
 
@@ -33,6 +35,8 @@ export enum BuiltInAction {
   Create = 'create',
   Update = 'update',
   Delete = 'delete',
+  Template = 'template',
+  Import = 'import',
   Export = 'export'
 }
 
