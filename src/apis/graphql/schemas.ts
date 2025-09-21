@@ -72,21 +72,21 @@ export function createQueryWithFilters(queryName: string, queryFields: string) {
 }
 
 export function createQueryWithoutFilters(
-    variables: Record<string, any>,
+    variables: Record<string, any> | undefined,
     queryName: string,
-    queryFields: string
+    queryFields: string = ''
 ) {
-    const variableDefinitions = Object.keys(variables)
-        .map((key) => `$${key}: ${getGraphQLType(variables[key])}`)
-        .join(', ');
+    const variableDefinitions = variables ? Object.keys(variables)
+                                        .map((key) => `$${key}: ${getGraphQLType(variables[key])}`)
+                                        .join(', ') : null;
 
-    const variableArgs = Object.keys(variables)
-        .map((key) => `${key}: $${key}`)
-        .join(', ');
+    const variableArgs = variables? Object.keys(variables)
+                                        .map((key) => `${key}: $${key}`)
+                                        .join(', ') : null;
 
     return gql`
-    query ${queryName}(${variableDefinitions}) {
-      ${queryName}(${variableArgs}) {
+    query ${queryName} ${variableDefinitions? '('+variableDefinitions+')' : ''} {
+      ${queryName}${variableArgs? '('+variableArgs+')' : ''} {
         data {
           ${queryFields}
         }

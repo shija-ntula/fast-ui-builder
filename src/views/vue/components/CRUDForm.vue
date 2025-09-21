@@ -20,6 +20,7 @@ const props = defineProps<{
   enumComponent?: Component;
   selectComponent?: Component;
   dateComponent?: Component;
+  switchComponent?: Component;
   formComponent?: Component;
 }>();
 
@@ -50,7 +51,7 @@ const onInput = (field: string, value: any) => {
 };
 
 const onSubmit = async () => {
-  console.log(formState.value)
+  
   const result = formState.value.id?
                   await props.modelValue?.update(formState.value) 
                   : await props.modelValue?.create(formState.value)
@@ -66,7 +67,7 @@ const onSubmit = async () => {
     <div v-for="field in fields" :key="field.field">
       <!-- Text/Number/Date -->
       
-      <div v-if="['text','number'].includes(field.type)" >
+      <div v-if="['text', 'textarea','number'].includes(field.type)" >
         <component 
           v-if="textComponent"
           :is="textComponent" 
@@ -146,6 +147,27 @@ const onSubmit = async () => {
           <label :for="field.field">{{ field.label }}</label>
           <input
             type="date"
+            :id="field.field" v-model="formState[field.field]" 
+            :placeholder="field.placeholder" 
+            :required="field.required"
+          />
+        </div>
+      </div>
+
+      <div v-if="['switch'].includes(field.type)" >
+        <component 
+          v-if="switchComponent"
+          :is="switchComponent" 
+          v-bind="{ 
+            ...field, 
+            placeholder: field.placeholder
+          }"
+          v-model="formState[field.field]"
+        />
+        <div v-else class="form-field">
+          <label :for="field.field">{{ field.label }}</label>
+          <input
+            type="checkbox"
             :id="field.field" v-model="formState[field.field]" 
             :placeholder="field.placeholder" 
             :required="field.required"

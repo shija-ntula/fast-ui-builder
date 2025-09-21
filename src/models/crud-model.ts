@@ -2,7 +2,7 @@ import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
 import { CRUDService } from '../services/crud-service'
 import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader } from '../index'
-import { createQueryWithFilters, getMutationSchema } from '../apis/graphql/schemas';
+import { createQueryWithFilters, getGraphQLFields, getMutationSchema } from '../apis/graphql/schemas';
 import axios from 'axios';
 
 export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
@@ -34,13 +34,13 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
       api || activeApi
     );
   }
-  async fetchAll(paginationParams: PaginationParams = defaultParams, options: any): Promise<{itemCount: number, items: T[]} | null> {
+  async fetchAll(paginationParams: PaginationParams = defaultParams, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
     if (this.api instanceof GraphQLApi) {
       return await (this.api as GraphQLApi).query(
                       `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`,
                       createQueryWithFilters(
                         `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`, 
-                        (this.constructor as typeof CRUDModel).getGraphqlFields()
+                        requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
                       ),
                       paginationParams, 
                       options
@@ -48,7 +48,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     } else if (this.api instanceof RestApi) {
       const result = await (this.api as RestApi).get(paginationParams) 
     }
-
+    // 0674897173 - asha ally
     return null
   }
 
@@ -177,17 +177,23 @@ export class PaginationParams {
   /**
    * Add a search column if it's not already in the list.
    */
-  addSearchColumn(column: string): void {
-    if (!this.searchColumns.includes(column)) {
-      this.searchColumns.push(column);
+  addSearchColumn(column: string | string[]): void {
+    column = Array.isArray(column) ? column : [column];
+    for (const c of column) {
+      if (!this.searchColumns.includes(c)) {
+        this.searchColumns.push(c);
+      }
     }
   }
 
   /**
    * Remove a search column if it exists.
    */
-  removeSearchColumn(column: string): void {
-    this.searchColumns = this.searchColumns.filter(c => c !== column);
+  removeSearchColumn(column: string | string[]): void {
+    column = Array.isArray(column) ? column : [column];
+    for (const c of column) {
+      this.searchColumns = this.searchColumns.filter(c => c !== c);
+    }
   }
 }
 

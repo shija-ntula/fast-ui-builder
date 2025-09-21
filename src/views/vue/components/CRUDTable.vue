@@ -153,6 +153,10 @@ const getTableActions = () => {
 const getRowActions = () => {
   const rowActions = []
 
+  if (props.resource.features.view) {
+    rowActions.push({label: 'View', action: BuiltInAction.View});
+  }
+
   if (props.resource.features.update) {
     rowActions.push({label: 'Update', action: BuiltInAction.Update});
   }

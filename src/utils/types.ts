@@ -15,7 +15,8 @@ export interface FormFieldDef {
   field: string;
   label: string;
   displayFields?: string[];
-  type: "text" | "number" | "select" | "date" | "textarea" | "checkbox";
+  type: "text" | "number" | "select" | "date" | "textarea" | "checkbox" | "switch";
+  createField?: string;
   grid?: number;
   hidden?: boolean;
   required?: boolean;
@@ -23,6 +24,8 @@ export interface FormFieldDef {
   noUpdate?: boolean;
   resource?: any; // for selects
   placeholder?: string;
+  options?: any;
+  format?: Function | undefined;
 }
 
 // Allow also just a field name
@@ -33,6 +36,7 @@ export type FieldPropsOptions = Omit<FormFieldDef, 'field'>;
 
 export enum BuiltInAction {
   Create = 'create',
+  View = 'view',
   Update = 'update',
   Delete = 'delete',
   Template = 'template',

@@ -50,10 +50,8 @@ export abstract class DataModel<T> {
     for (const [field, opts] of Object.entries(metas)) {
       if (opts.displayFields) {
         fields.push({ field: `${field}.id` });
-        if(opts.displayFields){
-          for (const displayField of opts.displayFields) {
-            fields.push({ field: `${field}.${displayField}` });
-          }
+        for (const displayField of opts.displayFields) {
+          fields.push({ field: `${field}.${displayField}` });
         }
       } else {
         fields.push({ field });
@@ -61,15 +59,6 @@ export abstract class DataModel<T> {
     }
 
     return getGraphQLFields(fields);
-
-    // return getGraphQLFields(
-    //   Object.entries(
-    //     getColumnMetadata(this)).map(([field, opts]) => {
-
-    //       return {
-    //         field: field + ((typeof this[field]) instanceof DataModel ? 'Id' : '')
-    //       }
-    // }));
   }
 
   // Deserialize and return a new instance
@@ -152,8 +141,8 @@ export abstract class DataModel<T> {
         action === BuiltInAction.Update && !opts.noUpdate
       ))
       .map(([field, opts]) => ({
-        field,
         ...opts,
+        field: opts.createField || field + (opts.type === 'select' ? 'Id' : ''),
         label: opts.label || toTitle(field),
       }));
   }

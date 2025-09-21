@@ -11,6 +11,18 @@ export const toTitle = (str: string) => {
   );
 };
 
+export const toSnakeCase = (str: string): string => {
+  return (
+    str
+      // Replace spaces and hyphens with underscores
+      .replace(/[\s-]+/g, "_")
+      // Insert underscore before any capital letter (except first)
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      // Lowercase everything
+      .toLowerCase()
+  );
+};
+
 export const mergeStaticArray = <T>(cls: any, key: string): T[] => {
   const parent = Object.getPrototypeOf(cls);
   const parentValues: T[] = parent && parent[key] ? parent[key] : [];
@@ -23,6 +35,10 @@ export const enumToOptions = <T extends Record<string, string | number>>(e: T) =
     value: key,   // the enum key
     label: label, // the enum value
   }))
+}
+
+export const isObject = (val: any): val is Record<string, unknown> => {
+  return val !== null && typeof val === 'object' && !Array.isArray(val)
 }
 
 export const fieldValue = (col: any, row: any) => {
@@ -40,7 +56,7 @@ export const fieldValue = (col: any, row: any) => {
   if (col.displayFields && col.displayFields.length > 0) {
     const fields = col.displayFields[0].split(".");
     for (const field of fields) {
-      value = value[field];
+      value = isObject(value) ? value[field] : value;
     }
     return value;
   }
