@@ -1,9 +1,10 @@
-import { ColumnProps, FieldProps, getColumnMetadata, getFieldMetadata } from "./decorators";
+import { ColumnProps, FieldProps, getColumnMetadata, getFieldMetadata, getModelMetadata, ModelProps } from "./decorators";
 import { toTitle } from "../utils/helpers";
 import { getGraphQLFields } from "../apis/graphql/schemas";
 import { BuiltInAction } from "../utils/types";
 
 export abstract class DataModel<T> {
+
   @ColumnProps({ hidden: true })
   @FieldProps({
     label: "ID",
@@ -11,12 +12,6 @@ export abstract class DataModel<T> {
     hidden: true
   })
   id!: string | string
-
-  // @FieldProps({order: 99})
-  // createdAt?: string
-
-  // @FieldProps({hidden: true})
-  // updatedAt?: string
 
   // Serialize decorated fields
   toJson(action: BuiltInAction): Record<string, any> {
@@ -83,7 +78,7 @@ export abstract class DataModel<T> {
 
   // Return class name as snake_case
   getEndpoint(): string {
-    const className = this.constructor.name;
+    const className = getModelMetadata(this).name;
     return '/' + className
       .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
       .toLowerCase();
@@ -95,7 +90,7 @@ export abstract class DataModel<T> {
 
 
   static getModelTitle(): string {
-    return toTitle(this.name);
+    return toTitle(getModelMetadata(this).name);
   }
 
   static getModelTitlePlural(): string {
@@ -103,7 +98,7 @@ export abstract class DataModel<T> {
   }
   
   static getModelName(): string {
-    return this.name;
+    return getModelMetadata(this).name;
   }
 
   static getModelNamePlural(): string {

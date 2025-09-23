@@ -1,4 +1,11 @@
 
+export interface ModelDefOptions {
+  name: string;
+  endpoint?: string;
+  title?: string;
+  titlePlural?: string;
+}
+
 export interface ColumnDefOptions {
   field: string;
   hidden?: boolean;

@@ -2,7 +2,6 @@ import { ApolloClient, DocumentNode } from "@apollo/client/core";
 import { defaultParams, PaginationParams } from '../../models/crud-model';
 import { ApiInterface } from '../../interfaces/api';
 
-
 export class GraphQLApi implements ApiInterface {
   
   constructor(private client: ApolloClient) {}
@@ -14,7 +13,7 @@ export class GraphQLApi implements ApiInterface {
     options?: Record<string, any>
   ) {
     try {
-      const { data }: ApolloClient.MutateResult = await this.client.mutate({
+      const { data } = await this.client.mutate<any>({
         mutation: mutation,
         variables: { inputData: variables },
         context: {
@@ -36,7 +35,7 @@ export class GraphQLApi implements ApiInterface {
     options: Record<string, any> = {},
   ) {
     try {
-      const { data }: ApolloClient.QueryResult = await this.client.query({
+      const { data } = await this.client.query<any>({
         query: query,
         variables: { ...params },
         fetchPolicy: "network-only",

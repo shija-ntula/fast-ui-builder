@@ -1,6 +1,5 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { CRUDService } from '../services/crud-service'
 import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader } from '../index'
 import { createQueryWithFilters, getGraphQLFields, getMutationSchema } from '../apis/graphql/schemas';
 import axios from 'axios';
@@ -22,17 +21,11 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
 
   static gridWidth: number = 12
 
-  service: CRUDService<T, typeof CRUDModel>;
   api: ApiInterface
 
   constructor(api?: ApiInterface, endpoint?: string) {
     super()
     this.api = api || activeApi
-    this.service = new CRUDService<T, typeof CRUDModel>(
-      endpoint || this.getEndpoint(),
-      this.constructor as unknown as typeof CRUDModel & (new () => T),
-      api || activeApi
-    );
   }
   async fetchAll(paginationParams: PaginationParams = defaultParams, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
     if (this.api instanceof GraphQLApi) {
@@ -46,7 +39,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                       options
                     )
     } else if (this.api instanceof RestApi) {
-      const result = await (this.api as RestApi).get(paginationParams) 
+      // const result = await (this.api as RestApi).get(paginationParams) 
     }
     // 0674897173 - asha ally
     return null
@@ -65,7 +58,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                       data
                     )
     } else if (this.api instanceof RestApi) {
-      const result = await (this.api as RestApi).create(data) 
+      // const result = await (this.api as RestApi).create(data) 
     }
 
     return {status: false, data: null}
@@ -84,14 +77,15 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                       data
                     )
     } else if (this.api instanceof RestApi) {
-      const result = await (this.api as RestApi).create(data) 
+      // const result = await (this.api as RestApi).create(data) 
     }
 
     return {status: false, data: null}
   }
 
   async delete(id: number | string): Promise<boolean> {
-    return await this.service.delete(id)
+    // return await this.service.delete(id)
+    return false
   }
 
   async getTemplate(): Promise<boolean> {

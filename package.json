@@ -1,10 +1,10 @@
 {
   "name": "fast-ui-builder",
-  "version": "1.0.0",
+  "version": "1.0.1-dev.0",
   "keywords": [],
-  "author": "",
+  "author": "abuukauthar13@gmail.com",
   "license": "ISC",
-  "description": "",
+  "description": "Fast UI Builder is a package for building UI components which can be used in React, Vue, and other frameworks. The tool is fully compatible with a FastAPI backend server powered by our package called Fast API Builder (https://pypi.org/project/fast-backend-builder).",
   "files": [
     "dist"
   ],
@@ -19,7 +19,7 @@
     "build:core": "tsup src/index.ts --format esm,cjs --dts --out-dir dist",
     "build:vue": "vite build --config vite.config.vue.ts --outDir dist/vue",
     "build:react": "vite build --config vite.config.react.ts --outDir dist/react",
-    "build": "npm run build && npm run build:vue && npm run build:react"
+    "build": "npm run build:core && npm run build:vue && npm run build:react"
   },
   "exports": {
     ".": {
@@ -36,6 +36,8 @@
     }
   },
   "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
     "@types/node": "^24.2.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitejs/plugin-vue": "^6.0.1",
@@ -51,5 +53,9 @@
     "@apollo/client": "^4.0.1",
     "axios": "^1.12.2",
     "reflect-metadata": "^0.2.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   }
 }
