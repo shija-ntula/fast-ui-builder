@@ -48,6 +48,10 @@ export abstract class DataModel<T> {
     const fields = []
 
     for (const [field, opts] of Object.entries(metas)) {
+      if (opts.computed) {
+        continue
+      }
+
       if (opts.displayFields) {
         fields.push({ field: `${field}.id` });
         for (const displayField of opts.displayFields) {
@@ -81,7 +85,7 @@ export abstract class DataModel<T> {
   getEndpoint(): string {
     const className = this.constructor.name;
     return '/' + className
-      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
       .toLowerCase();
   }
   

@@ -2,6 +2,7 @@
 export interface ColumnDefOptions {
   field: string;
   hidden?: boolean;
+  computed?: boolean;
   header?: string;
   displayFields?: string[];
   headerClass?: string;

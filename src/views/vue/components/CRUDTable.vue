@@ -7,6 +7,7 @@ import { toTitle } from '../../../utils/helpers';
 import { get } from 'http';
 import { DataTableTheme } from '../types';
 import CRUDModal from './CRUDModal.vue';
+import { baseUrl } from '../../../index';
 
 const props = defineProps<{
   theme?: DataTableTheme;
@@ -22,6 +23,7 @@ const props = defineProps<{
   reload?: boolean;
   onLoading?: (isLoading: boolean) => void;
   onCreate?: (model: typeof props.resource) => void;
+  onView?: (resource: typeof props.resource, id: string) => void;
   onUpdate?: (model: typeof props.resource) => void;
   onDelete?: (id: number | string) => void;
   getTemplate?: () => Promise<boolean>;
@@ -45,6 +47,13 @@ const reloadTable = computed(() => props.reload)
 const onCreate = () => {
   if(props.onCreate){
     props.onCreate(new props.resource())
+  }
+}
+
+const onView = (model: Record<string, any>) => {
+  const instance = props.resource.fromJson(model)
+  if(props.onView){
+    props.onView(props.resource, model?.id)
   }
 }
 
@@ -115,6 +124,7 @@ const importTemplate = async () => {
 
 const actionHandlers: Record<string, (...args: any[]) => void> = {
   [BuiltInAction.Create]: onCreate,
+  [BuiltInAction.View]: onView,
   [BuiltInAction.Update]: onUpdate,
   [BuiltInAction.Delete]: onDelete,
   [BuiltInAction.Template]: getTemplate,

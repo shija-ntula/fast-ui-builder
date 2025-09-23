@@ -12,6 +12,7 @@ export type DataTableComponents = {
   headerWrapper?: string | Component;
   searchWrapper?: string | Component;
   actionsWrapper?: string | Component;
+  rowActions?: string | Component;
   searchInput?: string | Component;
   button?: string | Component;
   select?: string | Component;
