@@ -50,4 +50,27 @@ export class GraphQLApi implements ApiInterface {
       throw error;
     }
   }
+
+  async queryById(
+    queryName: string,
+    query: DocumentNode, 
+    id: string | number,
+    options: Record<string, any> = {},
+  ) {
+    try {
+      const { data } = await this.client.query<any>({
+        query: query,
+        variables: { id },
+        fetchPolicy: "network-only",
+        context: {
+          ...options
+        }
+      });
+      
+      return data[queryName].data;
+    } catch (error) {
+      console.error("GraphQL error:", error);
+      throw error;
+    }
+  }
 }

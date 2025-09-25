@@ -1,7 +1,7 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader } from '../index'
-import { createQueryWithFilters, getGraphQLFields, getMutationSchema } from '../apis/graphql/schemas';
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader, toSnakeCase } from '../index'
+import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema } from '../apis/graphql/schemas';
 import axios from 'axios';
 
 export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
@@ -36,6 +36,24 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                         requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
                       ),
                       paginationParams, 
+                      options
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    // 0674897173 - asha ally
+    return null
+  }
+  
+  async fetchById(id: number | string, options: any, requestFields: {field: string}[]): Promise<T | null> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).queryById(
+                      `get${(this.constructor as typeof CRUDModel).getModelName()}ById`,
+                      createGetByIdQuery(
+                        `get${(this.constructor as typeof CRUDModel).getModelName()}ById`, 
+                        requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
+                      ),
+                      id,
                       options
                     )
     } else if (this.api instanceof RestApi) {
@@ -162,7 +180,7 @@ export class PaginationParams {
   sortOrder?: SortOrder;
   searchColumns: string[] = [];
   searchQuery?: string
-  filters?: Filter[];
+  filters: string[] = [];
 
   constructor(init?: Partial<PaginationParams>) {
     Object.assign(this, init);
@@ -185,9 +203,26 @@ export class PaginationParams {
    */
   removeSearchColumn(column: string | string[]): void {
     column = Array.isArray(column) ? column : [column];
-    for (const c of column) {
-      this.searchColumns = this.searchColumns.filter(c => c !== c);
+    for (const col of column) {
+      this.searchColumns = this.searchColumns.filter(c => c !== col);
     }
+  }
+  
+  addFilters(filter: Filter | Filter[]): void {
+    const filters = Array.isArray(filter) ? filter : [filter];
+    for (const c of filters) {
+      const filterString = `${toSnakeCase(c.field).replace('.', '__')},${c.comparator},${c.value}`;
+      if (!this.filters.includes(filterString)) {
+        this.filters.push(filterString);
+      }
+    }
+  }
+
+  /**
+   * Remove a search column if it exists.
+   */
+  removeFilters(field: string): void {
+    this.filters = this.filters.filter(c => !c.startsWith(`${toSnakeCase(field).replace('.', '__')},`));
   }
 }
 

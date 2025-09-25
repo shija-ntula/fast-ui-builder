@@ -16,6 +16,7 @@ type DefaultModel = any; // or use a base interface
 
 const props = defineProps<{
   modelValue?: CRUDModel<any>;
+  filters?: {field: string, comparator: string, value: string}[];
   textComponent?: Component;
   enumComponent?: Component;
   selectComponent?: Component;
@@ -44,6 +45,10 @@ watch(
   },
   { immediate: true }
 );
+
+const getFieldFilter = (field: string) => {
+  return props.filters?.filter(f => f.field === field);
+}
 
 const onInput = (field: string, value: any) => {
   formState.value[field] = value;
@@ -120,6 +125,7 @@ const onSubmit = async () => {
             placeholder: field.placeholder || `Select ${field.label}`
           }"
           v-model="formState[field.field]"
+          :filters="getFieldFilter(field.field)"
         />
         <div v-else class="form-field">
           <label :for="field.field">{{ field.label }}</label>

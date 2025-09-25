@@ -21,7 +21,7 @@ export interface ColumnDefOptions {
 
 export interface FormFieldDef {
   field: string;
-  label: string;
+  label?: string;
   displayFields?: string[];
   type: "text" | "number" | "select" | "date" | "textarea" | "checkbox" | "switch";
   createField?: string;

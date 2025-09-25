@@ -109,9 +109,9 @@ function getGraphQLType(value: any): string {
     return 'String!'; // fallback
 }
 
-export function createGetByIdQuery(queryName: string, queryFields: string) {
+export function createGetByIdQuery(queryName: string, queryFields: string, idType = 'String') {
   return gql`
-      query ${queryName}($id: Int!) {
+      query ${queryName}($id: ${idType}!) {
         ${queryName}(id: $id) {
           data {
             ${queryFields}

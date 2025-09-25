@@ -3,7 +3,7 @@ import { ref, onMounted, defineProps, watch, reactive, computed } from 'vue';
 import DataTable from './DataTable.vue';
 import { defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
 import { BuiltInAction, ColumnDef, DynamicAction, Pagination } from '../../../utils/types';
-import { toTitle } from '../../../utils/helpers';
+import { debounce, toTitle } from '../../../utils/helpers';
 import { get } from 'http';
 import { DataTableTheme } from '../types';
 import CRUDModal from './CRUDModal.vue';
@@ -21,6 +21,7 @@ const props = defineProps<{
   columns?: ColumnDef[];
   showCount?: boolean;
   reload?: boolean;
+  defaultFilters?: {field: string, comparator: string, value: string}[];
   onLoading?: (isLoading: boolean) => void;
   onCreate?: (model: typeof props.resource) => void;
   onView?: (resource: typeof props.resource, id: string) => void;
@@ -164,28 +165,28 @@ const getRowActions = () => {
   const rowActions = []
 
   if (props.resource.features.view) {
-    rowActions.push({label: 'View', action: BuiltInAction.View});
+    rowActions.push({label: 'View', onClick: actionHandlers[BuiltInAction.View]});
   }
 
   if (props.resource.features.update) {
-    rowActions.push({label: 'Update', action: BuiltInAction.Update});
+    rowActions.push({label: 'Update', onClick: actionHandlers[BuiltInAction.Update]});
   }
 
   if (props.resource.features.delete) {
-    rowActions.push({label: 'Delete', action: BuiltInAction.Delete});
+    rowActions.push({label: 'Delete', onClick: actionHandlers[BuiltInAction.Delete]});
   }
 
   if (props.resource.features.attachment) {
     rowActions.push(...[
-      {label: 'Attach', action: BuiltInAction.Create},
-      {label: 'Attachments', action: BuiltInAction.Create}
+      {label: 'Attach', onClick: actionHandlers[BuiltInAction.Create]},
+      {label: 'Attachments', onClick: actionHandlers[BuiltInAction.Create]}
     ]);
   }
   
   if (props.resource.features.workflow) {
     rowActions.push(...[
-      {label: 'Submit', action: BuiltInAction.Create},
-      {label: 'Track', action: BuiltInAction.Create},
+      {label: 'Submit', onClick: actionHandlers[BuiltInAction.Create]},
+      {label: 'Track', onClick: actionHandlers[BuiltInAction.Create]},
     ]);
   }
 
@@ -208,7 +209,7 @@ const rowActions = ref(
     ...getRowActions(),
     ...(props.rowActions || [])
   ].map((action) => (
-    { label: action.label, onClick: (data: any) => actionHandlers[action.action](data) }
+    { label: action.label, icon: action.icon, class: action.class, onClick: (data: any) => action.onClick(data) }
   ))
 );
 
@@ -230,18 +231,43 @@ const pagination = reactive<Pagination>({
   }
 })
 
-const paginationParams = reactive<PaginationParams>({
+const paginationParams = reactive<PaginationParams>(new PaginationParams({
   ...defaultParams,
   page: pagination.page,
   pageSize: pagination.pageSize
-});
+}));
+
+const filters = ref<{field: string, comparator: string, value: string}[]>([]);
+const searchColumns = ref<string[]>([]);
+
+watch(
+  [() => props.defaultFilters, filters],
+  ([newDefaultFilters, newFilters], [oldDefaultFilters, oldFilters]) => {
+    
+    // do something when either changes
+    fetchData()
+  }
+)
+
+const preparePagination = () => {
+  paginationParams.filters = []
+  paginationParams.addFilters(props.defaultFilters || [])
+  paginationParams.addFilters(filters.value)
+}
+
+let currentRequest = 0;
 
 async function fetchData() {
   if (!props.resource) return;
+  const requestId = ++currentRequest;
   loading.value = true;
   try {
+    preparePagination()
+
     const instance = new props.resource();
     const data = await instance.fetchAll(paginationParams);
+
+    if (requestId !== currentRequest) return; // stale request, ignore
 
     if(data?.itemCount){
       dataItems.value = data.items;
@@ -249,20 +275,21 @@ async function fetchData() {
     }
 
   } finally {
-    loading.value = false;
+    if (requestId === currentRequest) loading.value = false;
   }
 }
 
-const search = (query: string) => {
-  paginationParams.search = {
-    field: 'name',
-    value: query
-  };
-  fetchData();
-}
+const lastSearchTime = Date.now()
+
+const search = debounce((query: string) => {
+  paginationParams.searchColumns = []
+  paginationParams.addSearchColumn(searchColumns.value)
+  paginationParams.searchQuery = query
+  fetchData()
+}, 500)
 
 const filter = (filters: {field: string, comparator: string, value: string}[]) => {
-  paginationParams.filters = filters;
+  paginationParams.addFilters(filters);
   fetchData();
 }
 
