@@ -78,7 +78,7 @@ export abstract class DataModel<T> {
 
   // Return class name as snake_case
   getEndpoint(): string {
-    const className = getModelMetadata(this).name;
+    const className = getModelMetadata(this.constructor).name;
     return '/' + className
       .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
       .toLowerCase();

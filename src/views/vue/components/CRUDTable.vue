@@ -190,6 +190,10 @@ const getRowActions = () => {
     ]);
   }
 
+  if (props.resource.customActions) {
+    rowActions.push(...props.resource.customActions);
+  }
+
   return rowActions
 }
 

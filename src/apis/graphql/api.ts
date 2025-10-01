@@ -27,6 +27,28 @@ export class GraphQLApi implements ApiInterface {
       throw error;
     }
   }
+  
+  async delete(
+    mutationName: string,
+    mutation: DocumentNode,
+    id: string | number,
+    options?: Record<string, any>
+  ) {
+    try {
+      const { data } = await this.client.mutate<any>({
+        mutation: mutation,
+        variables: { id },
+        context: {
+          ...options
+        }
+      });
+
+      return data[mutationName];
+    } catch (error) {
+      console.error("GraphQL error:", error);
+      throw error;
+    }
+  }
 
   async query(
     queryName: string,

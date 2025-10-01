@@ -1,7 +1,7 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader, toSnakeCase } from '../index'
-import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema } from '../apis/graphql/schemas';
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader, toSnakeCase, ColumnProps, DynamicAction } from '../index'
+import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema, getDeleteMutation } from '../apis/graphql/schemas';
 import axios from 'axios';
 
 export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
@@ -22,6 +22,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   static gridWidth: number = 12
 
   api: ApiInterface
+
+  static customActions: DynamicAction[] = []
 
   constructor(api?: ApiInterface, endpoint?: string) {
     super()
@@ -102,7 +104,17 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   }
 
   async delete(id: number | string): Promise<boolean> {
-    // return await this.service.delete(id)
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).delete(
+                      `delete${(this.constructor as typeof CRUDModel).getModelName()}`,
+                      getDeleteMutation(
+                        `delete${(this.constructor as typeof CRUDModel).getModelName()}`),
+                      id
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).create(data) 
+    }
+
     return false
   }
 
@@ -227,3 +239,69 @@ export class PaginationParams {
 }
 
 export const defaultParams = new PaginationParams();
+
+export abstract class WorkflowModel<T extends WorkflowModel<T>> extends CRUDModel<T> {
+  
+  @ColumnProps({ order: 99 })
+  evaluationStatus!: string
+
+  static features: CRUDFeatures = {
+    create: true,
+    search: true,
+    filter: true,
+    sort: true,
+    view: true,
+    update: true,
+    formWrapper: FormWapper.MODAL,
+    delete: true,
+    bulk: true,
+    export: true
+  };
+
+  async fetchEvaluations(paginationParams: PaginationParams = defaultParams, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).query(
+                      `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`,
+                      createQueryWithFilters(
+                        `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`, 
+                        requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
+                      ),
+                      paginationParams, 
+                      options
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    // 0674897173 - asha ally
+    return null
+  }
+  
+  async transit(data: EvaluationStatus): Promise<{status: boolean, data: boolean | null}> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).mutate(
+                      `transit${(this.constructor as typeof CRUDModel).getModelName()}`,
+                      getMutationSchema(
+                        `transit${(this.constructor as typeof CRUDModel).getModelName()}`, 
+                        `EvaluationStatus`, 
+                        false, 
+                        null,
+                      ),
+                      data
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).create(data) 
+    }
+
+    return {status: false, data: null}
+  }
+}
+
+export class EvaluationStatus {
+  objectId!: string | number;
+  remark!: string;
+  status!: string;
+}
+
+export abstract class AttachmentModel<T extends AttachmentModel<T>> extends CRUDModel<T> {}
+
+export abstract class FullCRUDModel<T extends FullCRUDModel<T>> extends WorkflowModel<T> {}

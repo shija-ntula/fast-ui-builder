@@ -145,9 +145,9 @@ export const getMutationSchema = (mutationName: string, requestClass: string, cr
     `
 }
 
-export function getDeleteMutation(mutationQueryName: string) {
+export function getDeleteMutation(mutationQueryName: string, idType = 'String') {
   const mutationString = `
-      mutation ${mutationQueryName}($id: Int!) {
+      mutation ${mutationQueryName}($id: ${idType}!) {
         ${mutationQueryName}(id: $id) {
           code
           message
