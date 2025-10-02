@@ -38,7 +38,7 @@ export abstract class DataModel<T> {
   }
   
   // Create graphql schema
-  static getGraphqlFields(): string {
+  static getGraphqlFields(moreFields?: { field: string }[]): string {
     const metas = getColumnMetadata(this)
     const fields = []
 
@@ -55,6 +55,10 @@ export abstract class DataModel<T> {
       } else {
         fields.push({ field });
       }
+    }
+
+    if (moreFields) {
+      fields.push(...moreFields);
     }
 
     return getGraphQLFields(fields);

@@ -35,7 +35,11 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                       `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`,
                       createQueryWithFilters(
                         `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`, 
-                        requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
+                        requestFields? 
+                          typeof requestFields === 'string' ? 
+                            requestFields 
+                          : getGraphQLFields(requestFields) 
+                            : (this.constructor as typeof CRUDModel).getGraphqlFields()
                       ),
                       paginationParams, 
                       options
@@ -47,13 +51,17 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     return null
   }
   
-  async fetchById(id: number | string, options: any, requestFields: {field: string}[]): Promise<T | null> {
+  async fetchById(id: number | string, options: any, requestFields: {field: string}[] | string): Promise<T | null> {
     if (this.api instanceof GraphQLApi) {
       return await (this.api as GraphQLApi).queryById(
                       `get${(this.constructor as typeof CRUDModel).getModelName()}ById`,
                       createGetByIdQuery(
                         `get${(this.constructor as typeof CRUDModel).getModelName()}ById`, 
-                        requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
+                        requestFields? 
+                          typeof requestFields === 'string' ? 
+                            requestFields 
+                          : getGraphQLFields(requestFields) 
+                            : (this.constructor as typeof CRUDModel).getGraphqlFields()
                       ),
                       id,
                       options
