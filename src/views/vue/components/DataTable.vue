@@ -16,7 +16,7 @@ const props = defineProps<{
   columns: ColumnDef[];
   rows: any[];
   showCount?: boolean;
-  pagination: Pagination;
+  pagination?: Pagination;
 }>();
 
 const searchQuery = ref('');
@@ -82,9 +82,10 @@ function clearFilter(field: string) {
 
     <component :is="theme?.components?.headerWrapper || 'div'" :class="theme?.classes?.headerWrapper || ''">
       <!-- Search -->
-      <component :is="theme?.components?.searchWrapper || 'div'" v-if="onSearch" :class="theme?.classes?.searchWrapper || 'datatable-search-wrapper'">
+      <component :is="theme?.components?.searchWrapper || 'div'" :class="theme?.classes?.searchWrapper || 'datatable-search-wrapper'">
         <slot name="search">
           <component
+            v-if="onSearch"
             :is="theme?.components?.searchInput || 'input'"
             v-model="searchQuery"
             type="text"
@@ -155,7 +156,7 @@ function clearFilter(field: string) {
             v-if="showCount"
             :class="theme?.classes?.cell || 'datatable-body-cell'"
           >
-            {{ (pagination.pageSize * (pagination.page - 1)) + (rIndex + 1) }}
+            {{ (pagination? (pagination.pageSize * (pagination.page - 1)) : 0) + (rIndex + 1) }}
           </component>
           <component
             :is="theme?.components?.cell || 'td'"

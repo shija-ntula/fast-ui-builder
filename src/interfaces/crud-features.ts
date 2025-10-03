@@ -14,4 +14,5 @@ export interface CRUDFeatures {
   export?: boolean;
   attachment?: boolean;
   workflow?: boolean;
+  pagination?: boolean;
 }

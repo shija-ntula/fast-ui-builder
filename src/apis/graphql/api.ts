@@ -53,7 +53,7 @@ export class GraphQLApi implements ApiInterface {
   async query(
     queryName: string,
     query: DocumentNode, 
-    params: PaginationParams = defaultParams,
+    params: any = defaultParams,
     options: Record<string, any> = {},
   ) {
     try {

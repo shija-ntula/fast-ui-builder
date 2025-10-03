@@ -16,7 +16,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     formWrapper: FormWapper.MODAL,
     delete: true,
     bulk: true,
-    export: true
+    export: true,
+    pagination: true
   };
 
   static gridWidth: number = 12

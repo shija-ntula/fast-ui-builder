@@ -10,6 +10,7 @@ import CRUDModal from './CRUDModal.vue';
 import { baseUrl } from '../../../index';
 
 const props = defineProps<{
+  modelValue?: [];
   theme?: DataTableTheme;
   resource: typeof CRUDModel;
   title?: string;
@@ -39,6 +40,7 @@ watch(loading, (val) => {
 });
 
 const emit = defineEmits<{
+  "update:modelValue": [value: []];
   "update:reload": [value: boolean];
 }>();
 
@@ -219,7 +221,7 @@ const rowActions = ref(
 
 const pagination = reactive<Pagination>({
   page: 1,
-  pageSize: 10,
+  pageSize: props.resource.features.pagination ? 10 : 100000000,
   total: 0,
   onPageChange(page: number) {
     pagination.page = page;
@@ -276,6 +278,8 @@ async function fetchData() {
     if(data?.itemCount){
       dataItems.value = data.items;
       pagination.total = data.itemCount;
+
+      emit("update:modelValue", data.items)
     }
 
   } finally {
@@ -345,7 +349,7 @@ const customTheme = {
       :tableActions="tableActions"
       :rowActions="rowActions"
       :columns="columns"
-      :pagination="pagination"
+      :pagination="props.resource.features.pagination? pagination : undefined"
       :show-count="props.showCount === undefined? true : props.showCount"
       :rows="dataItems"
     />
