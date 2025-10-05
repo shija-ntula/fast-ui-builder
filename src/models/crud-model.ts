@@ -1,6 +1,6 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader, toSnakeCase, ColumnProps, DynamicAction } from '../index'
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader, toSnakeCase, ColumnProps, DynamicAction, fieldValue } from '../index'
 import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema, getDeleteMutation } from '../apis/graphql/schemas';
 import axios from 'axios';
 
@@ -178,6 +178,19 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
       console.error("Upload error:", error);
     }
     return true
+  }
+
+  describe(): string | null {
+    const columns = (this.constructor as typeof CRUDModel).getColumns();
+
+    if (columns.length === 0) {
+      return null; // no columns defined
+    }
+
+    const firstCol = columns[0];
+    
+    // Access value from instance
+    return fieldValue(firstCol, this)
   }
 }
 

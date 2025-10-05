@@ -275,7 +275,7 @@ async function fetchData() {
 
     if (requestId !== currentRequest) return; // stale request, ignore
 
-    if(data?.itemCount){
+    if(Array.isArray(data?.items)){
       dataItems.value = data.items;
       pagination.total = data.itemCount;
 
