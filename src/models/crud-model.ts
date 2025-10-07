@@ -192,6 +192,21 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     // Access value from instance
     return fieldValue(firstCol, this)
   }
+  
+  static searchColumns(): string[] {
+    const columns = this.getColumns().flatMap((col) => {
+      if(col.hidden){
+        return []
+      } else if (col.displayFields?.length > 0) {
+        return col.displayFields?.map((f) => `${toSnakeCase(col.field)}__${toSnakeCase(f).replace('.', '__')}`);
+      } else {
+        return [toSnakeCase(col.field)];
+      }
+    });
+
+    console.log(columns)
+    return columns
+  }
 }
 
 type SortOrder = "asc" | "desc";

@@ -124,15 +124,15 @@ export function createGetByIdQuery(queryName: string, queryFields: string, idTyp
     `;
 }
 
-export const getMutationSchema = (mutationName: string, requestClass: string, createMultiple: boolean = false, responseFields: string | null = null) => {
+export const getMutationSchema = (mutationName: string, requestClass: string | null = null, createMultiple: boolean = false, responseFields: string | null = null) => {
 
   if (createMultiple) {
     requestClass = `[${requestClass}!]`
   }
 
   return gql`
-      mutation ${mutationName}($inputData: ${requestClass}!){
-        ${mutationName}(inputData: $inputData){
+      mutation ${mutationName}${requestClass? '($inputData: ' + requestClass + '!)' : ''}{
+        ${mutationName}${requestClass? '(inputData: $inputData)' : ''}{
           ${responseFields ?
       'data {' +
       responseFields +

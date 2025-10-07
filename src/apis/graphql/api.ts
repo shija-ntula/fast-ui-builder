@@ -9,13 +9,13 @@ export class GraphQLApi implements ApiInterface {
   async mutate(
     mutationName: string,
     mutation: DocumentNode,
-    variables: Record<string, any>,
+    variables?: Record<string, any>,
     options?: Record<string, any>
   ) {
     try {
       const { data } = await this.client.mutate<any>({
         mutation: mutation,
-        variables: { inputData: variables },
+        variables: variables? { inputData: variables } : {},
         context: {
           ...options
         }

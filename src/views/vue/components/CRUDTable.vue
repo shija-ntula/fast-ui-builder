@@ -244,7 +244,11 @@ const paginationParams = reactive<PaginationParams>(new PaginationParams({
 }));
 
 const filters = ref<{field: string, comparator: string, value: string}[]>([]);
-const searchColumns = ref<string[]>([]);
+const searchColumns = computed<string[]>(() => {
+  return props.resource.features.search?
+    props.resource.searchColumns()
+    : []
+});
 
 watch(
   [() => props.defaultFilters, filters],
@@ -344,7 +348,7 @@ const customTheme = {
       :theme="props.theme"
       :title="props.title === undefined? `${props.resource.getModelTitle()} List` : props.title"
       :searchPlaceholder="props.searchPlaceholder"
-      :onSearch="props.resource.features.search? props.onSearch || search : undefined"
+      :onSearch="searchColumns.length? props.onSearch || search : undefined"
       :onFilter="props.resource.features.filter? props.onFilter || filter : undefined"
       :tableActions="tableActions"
       :rowActions="rowActions"

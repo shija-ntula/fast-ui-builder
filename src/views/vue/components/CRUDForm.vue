@@ -125,7 +125,8 @@ const onSubmit = async () => {
             placeholder: field.placeholder || `Select ${field.label}`
           }"
           v-model="formState[field.field]"
-          :filters="getFieldFilter(field.field)"
+          :default-filters="getFieldFilter(field.field)"
+          :formValues="formState"
         />
         <div v-else class="form-field">
           <label :for="field.field">{{ field.label }}</label>
@@ -182,47 +183,6 @@ const onSubmit = async () => {
       </div>
 
     </div>
-    <!-- <div v-for="field in fields" :key="field.field" class="form-field"> -->
-      
-      <!-- <input
-        v-if="['text','number','date'].includes(field.type)"
-        :id="field.field"
-        :type="field.type"
-        v-model="formState[field.field]"
-        :placeholder="field.placeholder"
-        :required="field.required"
-      /> -->
-
-      <!-- Textarea -->
-      <!-- <textarea
-        v-else-if="field.type === 'textarea'"
-        :id="field.field"
-        v-model="formState[field.field]"
-        :placeholder="field.placeholder"
-        :required="field.required"
-      ></textarea> -->
-
-      <!-- Checkbox -->
-      <!-- <input
-        v-else-if="field.type === 'checkbox'"
-        type="checkbox"
-        :id="field.field"
-        v-model="formState[field.field]"
-      /> -->
-
-      <!-- Select -->
-      <!-- <select
-        v-else-if="field.type === 'select'"
-        :id="field.field"
-        v-model="formState[field.field]"
-        :required="field.required"
-      >
-        <option v-for="opt in field.options" :key="opt" :value="opt">
-          {{ opt.label }}
-        </option>
-      </select> -->
-    <!-- </div> -->
-
     <slot></slot>
 
     <!-- <button type="submit">Submit</button> -->
