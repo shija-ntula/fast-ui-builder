@@ -27,7 +27,8 @@ export abstract class DataModel<T> {
 
         // ✅ If value is a subclass of DataModel, use its id
         if (value instanceof DataModel) {
-          result[`${field}Id`] = value.id;
+          // result[`${field}Id`] = value.id;
+          result[field] = value.id;
         } else {
           result[field] = value;
         }
@@ -145,7 +146,8 @@ export abstract class DataModel<T> {
       ))
       .map(([field, opts]) => ({
         ...opts,
-        field: opts.createField || field + (opts.type === 'select' ? 'Id' : ''),
+        // field: opts.createField || field + (opts.type === 'select' ? 'Id' : ''),
+        field: field,
         label: opts.label || toTitle(field),
       }));
   }

@@ -25,8 +25,15 @@ const props = defineProps<{
   formComponent?: Component;
 }>();
 
+const rawFields = computed<FormFieldDef[]>(() => {
+  return (props.modelValue?.constructor.getFields(BuiltInAction.Create).filter((f: FormFieldDef) => !f.hidden) || []);
+})
+
 const fields = computed<FormFieldDef[]>(() => {
-  return props.modelValue?.constructor.getFields(BuiltInAction.Create).filter((f: FormFieldDef) => !f.hidden) || [];
+  return rawFields.value.map((f: FormFieldDef) => ({
+            ...f,
+            field: f.createField || f.field + (f.type === 'select' ? 'Id' : ''),
+          }));
 })
 
 const emit = defineEmits<{
@@ -37,11 +44,23 @@ const emit = defineEmits<{
 // make a reactive form state
 const formState = ref<Record<string, any>>({});
 
-// initialize state when props change
+// Patch data
 watch(
   () => props.modelValue,
   (val) => {
-    formState.value = { ...(val?.toJson(BuiltInAction.Create) || {}) };
+    if(val){
+      const data = val//?.fromJson(BuiltInAction.Create) || {}
+      rawFields.value.forEach(f => {
+        const fieldName = f.createField || f.field + (f.type === 'select' ? 'Id' : '')
+        formState.value[fieldName] = data[f.field]
+        if(f.type === 'select' && formState.value[fieldName]){
+          console.log(fieldName, data[f.field]?.id)
+          formState.value[fieldName] = Array.isArray(data[f.field])? 
+                        data[f.field].map((d: any) => d.id) : data[f.field].id
+        }
+      })
+      console.log("DATA",data, formState.value)
+    }
   },
   { immediate: true }
 );
