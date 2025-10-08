@@ -65,6 +65,9 @@ const onSubmit = async () => {
     emit("afterSubmit", formState.value);
   }
 };
+
+const formId = `${props.modelValue?.constructor.getModelName() || "form"}-${Date.now()}`;
+
 </script>
 
 <template>
@@ -127,6 +130,7 @@ const onSubmit = async () => {
           v-model="formState[field.field]"
           :default-filters="getFieldFilter(field.field)"
           :formValues="formState"
+          :form-id="formId"
         />
         <div v-else class="form-field">
           <label :for="field.field">{{ field.label }}</label>
