@@ -26,11 +26,13 @@ const props = defineProps<{
 }>();
 
 const rawFields = computed<FormFieldDef[]>(() => {
-  return (props.modelValue?.constructor.getFields(BuiltInAction.Create).filter((f: FormFieldDef) => !f.hidden) || []);
+  return (props.modelValue?.constructor.getFields(
+    props.modelValue?.id ? BuiltInAction.Update : BuiltInAction.Create
+  ) || []);
 })
 
 const fields = computed<FormFieldDef[]>(() => {
-  return rawFields.value.map((f: FormFieldDef) => ({
+  return rawFields.value.filter((f: FormFieldDef) => !f.hidden).map((f: FormFieldDef) => ({
             ...f,
             field: f.createField || f.field + (f.type === 'select' ? 'Id' : ''),
           }));
@@ -38,7 +40,8 @@ const fields = computed<FormFieldDef[]>(() => {
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: Record<string, any>): void;
-  (e: "afterSubmit", value: Record<string, any>): void;
+  (e: "beforeSubmit", value: Record<string, any>): void;
+  (e: "afterSubmit", value: boolean): void;
 }>();
 
 // make a reactive form state
@@ -50,16 +53,16 @@ watch(
   (val) => {
     if(val){
       const data = val//?.fromJson(BuiltInAction.Create) || {}
+      console.log("FIELDS", rawFields.value)
       rawFields.value.forEach(f => {
         const fieldName = f.createField || f.field + (f.type === 'select' ? 'Id' : '')
         formState.value[fieldName] = data[f.field]
         if(f.type === 'select' && formState.value[fieldName]){
-          console.log(fieldName, data[f.field]?.id)
           formState.value[fieldName] = Array.isArray(data[f.field])? 
                         data[f.field].map((d: any) => d.id) : data[f.field].id
         }
       })
-      console.log("DATA",data, formState.value)
+      console.log("IN-DATA",data, "OUT-DATA", formState.value)
     }
   },
   { immediate: true }
@@ -75,14 +78,41 @@ const onInput = (field: string, value: any) => {
 };
 
 const onSubmit = async () => {
-  
-  const result = formState.value.id?
-                  await props.modelValue?.update(formState.value) 
-                  : await props.modelValue?.create(formState.value)
+  // Ask parent to modify or validate form data before submit
+  let dataToSubmit = { ...formState.value };
 
-  if (result && result.status) {
-    emit("afterSubmit", formState.value);
+  // If parent listener returns something, use it
+  const maybeModified = emit("beforeSubmit", dataToSubmit);
+
+  // Vue emit doesn’t return a promise automatically; you can handle async parent
+  // by letting the parent set up `@beforeSubmit` as an async listener returning a Promise.
+  if (maybeModified instanceof Promise) {
+    try {
+      const result = await maybeModified;
+      if (result && typeof result === 'object') {
+        dataToSubmit = result;
+      }
+    } catch (err) {
+      console.error("Error in beforeSubmit:", err);
+      return; // stop submission
+    }
+  } else if (Array.isArray(maybeModified) && maybeModified[0]) {
+    // Vue emits return an array of listener results
+    const firstResult = maybeModified[0];
+    if (firstResult && typeof firstResult === 'object') {
+      dataToSubmit = firstResult;
+    }
   }
+
+  // Now apply the possibly modified data
+  formState.value = dataToSubmit;
+
+  // Submit to model
+  const result = formState.value.id
+    ? await props.modelValue?.update(formState.value)
+    : await props.modelValue?.create(formState.value);
+
+  emit("afterSubmit", !!result?.status);
 };
 
 const formId = `${props.modelValue?.constructor.getModelName() || "form"}-${Date.now()}`;
@@ -90,7 +120,11 @@ const formId = `${props.modelValue?.constructor.getModelName() || "form"}-${Date
 </script>
 
 <template>
-  <component :is="formComponent || 'form'" @submit.prevent="onSubmit">
+  <component 
+    :is="formComponent || 'form'" 
+    :id="formId"
+    @submit.prevent="onSubmit"
+  >
     <div v-for="field in fields" :key="field.field">
       <!-- Text/Number/Date -->
       

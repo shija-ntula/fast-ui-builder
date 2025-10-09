@@ -9,9 +9,10 @@ export abstract class DataModel<T> {
   @FieldProps({
     label: "ID",
     type: "number",
-    hidden: true
+    hidden: true,
+    noCreate: true,
   })
-  id!: string | string
+  id!: string | number
 
   // Serialize decorated fields
   toJson(action: BuiltInAction): Record<string, any> {

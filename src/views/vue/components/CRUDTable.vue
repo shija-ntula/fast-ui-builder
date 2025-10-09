@@ -22,8 +22,8 @@ const props = defineProps<{
   columns?: ColumnDef[];
   showCount?: boolean;
   reload?: boolean;
+  sortBy?: string;
   defaultFilters?: {field: string, comparator: string, value: string}[];
-  onLoading?: (isLoading: boolean) => void;
   onCreate?: (model: typeof props.resource) => void;
   onView?: (resource: typeof props.resource, id: string) => void;
   onUpdate?: (model: typeof props.resource) => void;
@@ -32,16 +32,10 @@ const props = defineProps<{
   importTemplate?: () => Promise<boolean>;
 }>();
 
-const loading = ref(true);
-
-watch(loading, (val) => {
-  if(props.onLoading)
-    props.onLoading(val);
-});
-
 const emit = defineEmits<{
   "update:modelValue": [value: []];
   "update:reload": [value: boolean];
+  "onLoading": [loading: boolean, message?: string];
 }>();
 
 const reloadTable = computed(() => props.reload)
@@ -72,11 +66,13 @@ const onDelete = (model: Record<string, any>) => {
   }
 }
 
-const getTemplate = () => {
+const getTemplate = async () => {
   if(props.getTemplate){
     props.getTemplate()
   } else {
-    (new props.resource()).getTemplate()
+    emit("onLoading", true, "Downloading template...")
+    await (new props.resource()).getTemplate()
+    emit("onLoading", false, "Finished downloading template...")
   }
 }
 
@@ -103,9 +99,9 @@ const importTemplate = async () => {
       formData.append("file", file);
 
       try {
-        loading.value = true;
+        emit("onLoading", true, `Importing ${props.resource.getModelTitle()}...`)
         const imported = await (new props.resource()).importTemplate(formData);
-        loading.value = false;
+        emit("onLoading", false, "Finished importing...")
 
         if(imported){
           emit("update:reload", true)
@@ -263,6 +259,7 @@ const preparePagination = () => {
   paginationParams.filters = []
   paginationParams.addFilters(props.defaultFilters || [])
   paginationParams.addFilters(filters.value)
+  paginationParams.sortBy = props.sortBy
 }
 
 let currentRequest = 0;
@@ -270,7 +267,7 @@ let currentRequest = 0;
 async function fetchData() {
   if (!props.resource) return;
   const requestId = ++currentRequest;
-  loading.value = true;
+  emit("onLoading", true, "Fetching Data...")
   try {
     preparePagination()
 
@@ -287,7 +284,9 @@ async function fetchData() {
     }
 
   } finally {
-    if (requestId === currentRequest) loading.value = false;
+    if (requestId === currentRequest) {
+      emit("onLoading", false)
+    }
   }
 }
 
