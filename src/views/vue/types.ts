@@ -10,6 +10,7 @@ export type DataTableComponents = {
   headerCell?: string | Component;
   cell?: string | Component;
   headerWrapper?: string | Component;
+  filters?: string | Component;
   searchWrapper?: string | Component;
   actionsWrapper?: string | Component;
   rowActions?: string | Component;

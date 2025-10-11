@@ -194,18 +194,24 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   }
   
   static searchColumns(): string[] {
-    const columns = this.getColumns().flatMap((col) => {
-      if(col.hidden){
-        return []
-      } else if (col.displayFields?.length > 0) {
-        return col.displayFields?.map((f) => `${toSnakeCase(col.field)}__${toSnakeCase(f).replace('.', '__')}`);
-      } else {
-        return [toSnakeCase(col.field)];
-      }
-    });
-
-    console.log(columns)
-    return columns
+    return this.getColumns().flatMap((col) => {
+          if (col.hidden) {
+            return [];
+          }
+    
+          if (Array.isArray(col.displayFields) && col.displayFields.length > 0) {
+            return col.displayFields
+              .map((f) => {
+                if (!f) {
+                  return undefined;
+                }
+                return `${toSnakeCase(col.field)}__${toSnakeCase(f).replace('.', '__')}`;
+              })
+              .filter((v): v is string => Boolean(v)); // ✅ removes undefined safely
+          }
+    
+          return [toSnakeCase(col.field)];
+        });
   }
 }
 
@@ -221,6 +227,40 @@ type Filter = {
   comparator: string;
   value: any;
 }
+
+export enum Comparator {
+  EXCLUDE = 'exclude',           // Exclude records with this value
+  EXACT = 'exact',               // Matches exactly
+  IS_NULL = 'isnull',            // Checks if field is null / not null
+  NOT_EQUAL = 'ne',              // Not equal to
+  I_CONTAINS = 'icontains',      // Case-insensitive contains
+  STARTS_WITH = 'startswith',    // Starts with
+  ENDS_WITH = 'endswith',        // Ends with
+  CONTAINS = 'contains',         // Case-sensitive contains
+  GREATER_OR_EQUAL = 'gte',      // Greater than or equal
+  LESS_OR_EQUAL = 'lte',         // Less than or equal
+  BOOLEAN = 'bool',              // Boolean match (true/false)
+  DATE = 'date',                 // Exact date match
+  IN = 'in',                     // Value in list
+  NOT_IN = 'nin',                // Value not in list
+}
+
+export const ComparatorLabels: Record<Comparator, string> = {
+  [Comparator.EXCLUDE]: 'Exclude',
+  [Comparator.EXACT]: 'Equals',
+  [Comparator.IS_NULL]: 'Is Empty',
+  [Comparator.NOT_EQUAL]: 'Not Equal',
+  [Comparator.I_CONTAINS]: 'Contains (case-insensitive)',
+  [Comparator.STARTS_WITH]: 'Starts With',
+  [Comparator.ENDS_WITH]: 'Ends With',
+  [Comparator.CONTAINS]: 'Contains (case-sensitive)',
+  [Comparator.GREATER_OR_EQUAL]: 'Greater Than or Equal',
+  [Comparator.LESS_OR_EQUAL]: 'Less Than or Equal',
+  [Comparator.BOOLEAN]: 'Boolean (True/False)',
+  [Comparator.DATE]: 'Date Match',
+  [Comparator.IN]: 'In List',
+  [Comparator.NOT_IN]: 'Not In List',
+};
 
 export class PaginationParams {
   page: number = 1;
