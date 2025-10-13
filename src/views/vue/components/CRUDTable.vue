@@ -7,12 +7,13 @@ import { debounce, toTitle } from '../../../utils/helpers';
 import { get } from 'http';
 import { DataTableTheme } from '../types';
 import CRUDModal from './CRUDModal.vue';
-import { baseUrl } from '../../../index';
+import { baseUrl, CRUDFeatures } from '../../../index';
 
 const props = defineProps<{
   modelValue?: [];
   theme?: DataTableTheme;
   resource: typeof CRUDModel;
+  features?: CRUDFeatures;
   title?: string;
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
@@ -39,6 +40,10 @@ const emit = defineEmits<{
 }>();
 
 const reloadTable = computed(() => props.reload)
+
+const tableFeatures = computed(() => (
+  props.features || props.resource.features
+))
 
 // Action callbacks
 const onCreate = () => {
@@ -133,26 +138,26 @@ const actionHandlers: Record<string, (...args: any[]) => void> = {
 const getTableActions = () => {
   const tableActions = []
 
-  if (props.resource.features.import) {
+  if (tableFeatures.value.import) {
     tableActions.push({label: 'Template', action: BuiltInAction.Template});
     tableActions.push({label: 'Import', action: BuiltInAction.Import});
   }
 
-  if (props.resource.features.export) {
+  if (tableFeatures.value.export) {
     tableActions.push({label: 'Export PDF', action: BuiltInAction.Create});
     tableActions.push({label: 'Export CSV', action: BuiltInAction.Create});
     tableActions.push({label: 'Export XLS', action: BuiltInAction.Create});
   }
 
-  if (props.resource.features.attachment) {
+  if (tableFeatures.value.attachment) {
     tableActions.push({label: 'Attachments', action: BuiltInAction.Create});
   }
   
-  if (props.resource.features.workflow) {
+  if (tableFeatures.value.workflow) {
     tableActions.push({label: 'Workflow', action: BuiltInAction.Create});
   }
 
-  if (props.resource.features.create) {
+  if (tableFeatures.value.create) {
     tableActions.push({label: 'Create', action: BuiltInAction.Create});
   }
 
@@ -162,26 +167,26 @@ const getTableActions = () => {
 const getRowActions = () => {
   const rowActions = []
 
-  if (props.resource.features.view) {
+  if (tableFeatures.value.view) {
     rowActions.push({label: 'View', onClick: actionHandlers[BuiltInAction.View]});
   }
 
-  if (props.resource.features.update) {
+  if (tableFeatures.value.update) {
     rowActions.push({label: 'Update', onClick: actionHandlers[BuiltInAction.Update]});
   }
 
-  if (props.resource.features.delete) {
+  if (tableFeatures.value.delete) {
     rowActions.push({label: 'Delete', onClick: actionHandlers[BuiltInAction.Delete]});
   }
 
-  if (props.resource.features.attachment) {
+  if (tableFeatures.value.attachment) {
     rowActions.push(...[
       {label: 'Attach', onClick: actionHandlers[BuiltInAction.Create]},
       {label: 'Attachments', onClick: actionHandlers[BuiltInAction.Create]}
     ]);
   }
   
-  if (props.resource.features.workflow) {
+  if (tableFeatures.value.workflow) {
     rowActions.push(...[
       {label: 'Submit', onClick: actionHandlers[BuiltInAction.Create]},
       {label: 'Track', onClick: actionHandlers[BuiltInAction.Create]},
@@ -217,7 +222,7 @@ const rowActions = ref(
 
 const pagination = reactive<Pagination>({
   page: 1,
-  pageSize: props.resource.features.pagination ? 10 : 100000000,
+  pageSize: tableFeatures.value.pagination ? 10 : 100000000,
   total: 0,
   onPageChange(page: number) {
     pagination.page = page;
@@ -241,7 +246,7 @@ const paginationParams = reactive<PaginationParams>(new PaginationParams({
 
 const filters = ref<{field: string, comparator: string, value: string}[]>([]);
 const searchColumns = computed<string[]>(() => {
-  return props.resource.features.search?
+  return tableFeatures.value.search?
     props.resource.searchColumns()
     : []
 });
@@ -348,11 +353,11 @@ const customTheme = {
       :title="props.title === undefined? `${props.resource.getModelTitle()} List` : props.title"
       :searchPlaceholder="props.searchPlaceholder"
       :onSearch="searchColumns.length? props.onSearch || search : undefined"
-      :onFilter="props.resource.features.filter? props.onFilter || filter : undefined"
+      :onFilter="tableFeatures.filter? props.onFilter || filter : undefined"
       :tableActions="tableActions"
       :rowActions="rowActions"
       :columns="columns"
-      :pagination="props.resource.features.pagination? pagination : undefined"
+      :pagination="tableFeatures.pagination? pagination : undefined"
       :show-count="props.showCount === undefined? true : props.showCount"
       :rows="dataItems"
     />
