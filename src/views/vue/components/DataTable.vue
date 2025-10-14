@@ -164,10 +164,12 @@ function clearFilter(field: string) {
             :key="cIndex"
             :class="typeof col === 'string' ? theme?.classes?.cell || 'datatable-body-cell' : col.rowClass || theme?.classes?.cell || 'datatable-body-cell'"
           >
-            <slot :name="`cell.${typeof col === 'string' ? col : col.field}`" :row="row">
-              {{
-                fieldValue(col, row)
-              }}
+            <!-- ✅ This slot renders either custom content or fallback -->
+            <slot
+              :name="`cell.${typeof col === 'string' ? col : col.field}`"
+              :row="row"
+            >
+              {{ fieldValue(col, row) }}
             </slot>
           </component>
           <component

@@ -363,12 +363,12 @@ const slots = useSlots()
       :show-count="props.showCount === undefined? true : props.showCount"
       :rows="dataItems"
     >
-      <template #cell.certificates="slotProps">
-        dsfsecas<
-      </template>
-      <!-- Forward cell slots down again -->
-      <template v-for="(slotFn, name) in slots" v-if="name.startsWith('cell.')" #[name]="slotProps">
-        <slot :name="name" v-bind="slotProps" />
+      <template 
+        v-for="(_, name) in slots"
+        :key="name"
+        #[name]="{row}"
+      >
+        <slot :name="name" v-bind="row" />
       </template>
     </DataTable>
   </div>

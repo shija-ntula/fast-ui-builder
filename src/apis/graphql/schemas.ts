@@ -216,8 +216,8 @@ export function getAttachmentQuery(queryName: string, parentIdVariableName: stri
 export function createAttachmentMutation(mutationQueryName: string, parentIdVariableName: string, attachmentType: string) {
 
   const mutationString = `
-      mutation ${mutationQueryName}($attachment: ${attachmentType}!, $${parentIdVariableName}: String!) {
-        ${mutationQueryName}(inputData: $attachment, ${parentIdVariableName}: $${parentIdVariableName}) {
+      mutation ${mutationQueryName}($inputData: ${attachmentType}!, $${parentIdVariableName}: String!) {
+        ${mutationQueryName}(inputData: $inputData, ${parentIdVariableName}: $${parentIdVariableName}) {
           data {
              ${attachmentFields}
           }

@@ -60,7 +60,6 @@ watch(
           formState.value[fieldName] = Array.isArray(data[f.field])? 
                         data[f.field].map((d: any) => d.id) : data[f.field].id
         }
-        console.log(f.field, fieldName, formState.value[fieldName], data[f.field].map((d: any) => d.id))
       })
     }
   },
