@@ -40,13 +40,27 @@ export class GraphQLApi implements ApiInterface {
   async delete(
     mutationName: string,
     mutation: DocumentNode,
-    id: string | number,
-    options?: Record<string, any>
+    id?: string | number,
+    options?: Record<string, any>,
+    variables?: Record<string, any>,
   ) {
+
+    const payload = id && variables ?  
+                        { id, ...variables } 
+                      : id ?
+                          { id } 
+                        : variables ?
+                            { ...variables } 
+                          : null
+
+    if (!payload) {
+      throw new Error("Invalid payload. Please provide either id or variables.");
+    }
+
     try {
       const { data } = await this.client.mutate<any>({
         mutation: mutation,
-        variables: { id },
+        variables: payload,
         context: {
           ...options
         }
