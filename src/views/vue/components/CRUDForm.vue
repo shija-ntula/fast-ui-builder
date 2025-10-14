@@ -52,8 +52,7 @@ watch(
   () => props.modelValue,
   (val) => {
     if(val){
-      const data = val//?.fromJson(BuiltInAction.Create) || {}
-      console.log("FIELDS", rawFields.value)
+      const data = val
       rawFields.value.forEach(f => {
         const fieldName = f.createField || f.field + (f.type === 'select' ? 'Id' : '')
         formState.value[fieldName] = data[f.field]
@@ -61,8 +60,8 @@ watch(
           formState.value[fieldName] = Array.isArray(data[f.field])? 
                         data[f.field].map((d: any) => d.id) : data[f.field].id
         }
+        console.log(f.field, fieldName, formState.value[fieldName])
       })
-      console.log("IN-DATA",data, "OUT-DATA", formState.value)
     }
   },
   { immediate: true }

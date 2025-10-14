@@ -1,3 +1,4 @@
+import { Component } from "vue";
 
 export interface ModelDefOptions {
   name: string;
@@ -8,6 +9,7 @@ export interface ModelDefOptions {
 
 export interface ColumnDefOptions {
   field: string;
+  modelField?: string;
   hidden?: boolean;
   computed?: boolean;
   header?: string;
@@ -17,6 +19,8 @@ export interface ColumnDefOptions {
   order?: number;
   enum?: Record<string, string | number>;
   format?: Function | undefined;
+  component?: Component;
+  formatHtml?: Function | undefined;
 }
 
 export interface FormFieldDef {

@@ -149,6 +149,7 @@ export abstract class DataModel<T> {
         ...opts,
         // field: opts.createField || field + (opts.type === 'select' ? 'Id' : ''),
         field: field,
+        modelField: field,
         label: opts.label || toTitle(field),
       }));
   }

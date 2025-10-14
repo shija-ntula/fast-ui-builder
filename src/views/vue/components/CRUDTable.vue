@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, defineProps, watch, reactive, computed } from 'vue';
+import { ref, onMounted, defineProps, watch, reactive, computed, useSlots } from 'vue';
 import DataTable from './DataTable.vue';
 import { defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
 import { BuiltInAction, ColumnDef, DynamicAction, Pagination } from '../../../utils/types';
@@ -343,6 +343,8 @@ const customTheme = {
   }
 };
 
+const slots = useSlots()
+
 
 </script>
 
@@ -360,7 +362,15 @@ const customTheme = {
       :pagination="tableFeatures.pagination? pagination : undefined"
       :show-count="props.showCount === undefined? true : props.showCount"
       :rows="dataItems"
-    />
+    >
+      <template #cell.certificates="slotProps">
+        dsfsecas<
+      </template>
+      <!-- Forward cell slots down again -->
+      <template v-for="(slotFn, name) in slots" v-if="name.startsWith('cell.')" #[name]="slotProps">
+        <slot :name="name" v-bind="slotProps" />
+      </template>
+    </DataTable>
   </div>
 </template>
 

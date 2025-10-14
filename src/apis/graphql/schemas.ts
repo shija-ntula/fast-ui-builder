@@ -74,7 +74,7 @@ export function createQueryWithFilters(queryName: string, queryFields: string) {
 export function createQueryWithoutFilters(
     variables: Record<string, any> | undefined,
     queryName: string,
-    queryFields: string = ''
+    queryFields?: string
 ) {
     const variableDefinitions = variables ? Object.keys(variables)
                                         .map((key) => `$${key}: ${getGraphQLType(variables[key])}`)
@@ -87,9 +87,8 @@ export function createQueryWithoutFilters(
     return gql`
     query ${queryName} ${variableDefinitions? '('+variableDefinitions+')' : ''} {
       ${queryName}${variableArgs? '('+variableArgs+')' : ''} {
-        data {
-          ${queryFields}
-        }
+        data
+          ${queryFields? '{'+queryFields+'}' : ''}
         code
         message
         status
