@@ -256,7 +256,10 @@ watch(
   ([newDefaultFilters, newFilters], [oldDefaultFilters, oldFilters]) => {
     
     // do something when either changes
-    fetchData()
+    if(newDefaultFilters && !paginationParams.hasFilters(newDefaultFilters) || 
+                          newFilters && !paginationParams.hasFilters(newFilters)) {
+      fetchData()
+    }
   }
 )
 

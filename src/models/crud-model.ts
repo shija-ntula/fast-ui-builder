@@ -307,6 +307,16 @@ export class PaginationParams {
     }
   }
 
+  hasFilters(filter: Filter | Filter[]): boolean {
+    const filters = Array.isArray(filter) ? filter : [filter];
+    let hasAll = true
+    for (const c of filters) {
+      const filterString = `${toSnakeCase(c.field).replace('.', '__')},${c.comparator},${c.value}`;
+      hasAll &&= this.filters.includes(filterString)
+    }
+    return hasAll
+  }
+
   /**
    * Remove a search column if it exists.
    */

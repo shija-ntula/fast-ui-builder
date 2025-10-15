@@ -178,24 +178,27 @@ function clearFilter(field: string) {
             :class="theme?.classes?.cell || 'datatable-body-cell'"
             style="text-align: end;"
           >
-            <!-- <slot name="actions" :row="row"> -->
-            <component
-              v-if="theme?.components?.rowActions"
-              :is="theme?.components?.rowActions"
-              :actions="rowActions"
-              :data="row"
-            />
-            <component
-              v-else
-              v-for="(action, i) in rowActions"
-              :is="theme?.components?.button || 'button'"
-              :key="i"
-              :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
-              @click="action.onClick(row)"
+            <slot
+              name="actions"
+              :row="row"
             >
-              {{ action.label }}
-            </component>
-            <!-- </slot> -->
+              <component
+                v-if="theme?.components?.rowActions"
+                :is="theme?.components?.rowActions"
+                :actions="rowActions"
+                :data="row"
+              />
+              <component
+                v-else
+                v-for="(action, i) in rowActions"
+                :is="theme?.components?.button || 'button'"
+                :key="i"
+                :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
+                @click="action.onClick(row)"
+              >
+                {{ action.label }}
+              </component>
+            </slot>
           </component>
         </component>
         <component :is="theme?.components?.row || 'tr'" v-else>

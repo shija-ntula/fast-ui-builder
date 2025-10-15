@@ -111,9 +111,9 @@ export abstract class DataModel<T> {
     return `${this.getModelName()}s`;
   }
 
-  static getColumns() {
+  static getColumns(showHidden = false) {
     return Object.entries(getColumnMetadata(this))
-      .filter(([_, opts]) => !opts.hidden) // exclude hidden=true
+      .filter(([field, opts]) => !opts.hidden || showHidden && field !== 'id') // exclude hidden=true
       // 2) sort by numeric `order` (undefined goes to the end), then by field name
       .sort(([, aOpts], [, bOpts]) => {
         const a = typeof aOpts.order === 'number' ? aOpts.order : Number.POSITIVE_INFINITY;
