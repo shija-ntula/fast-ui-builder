@@ -7,7 +7,7 @@ import { debounce, toTitle } from '../../../utils/helpers';
 import { get } from 'http';
 import { DataTableTheme } from '../types';
 import CRUDModal from './CRUDModal.vue';
-import { baseUrl, CRUDFeatures } from '../../../index';
+import { CRUDFeatures } from '../../../index';
 
 const props = defineProps<{
   modelValue?: [];
@@ -97,7 +97,6 @@ const importTemplate = async () => {
       if (!target.files || target.files.length === 0) return;
 
       const file = target.files[0];
-      console.log("Selected file:", file.name);
 
       // Prepare form data
       const formData = new FormData();
@@ -112,8 +111,6 @@ const importTemplate = async () => {
           emit("update:reload", true)
           fetchData()
         }
-
-        console.log("Upload success:");
       } catch (error) {
         console.error("Upload error:", error);
       }

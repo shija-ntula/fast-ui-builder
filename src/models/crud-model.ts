@@ -1,8 +1,9 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, baseUrl, accessTokenHeader, toSnakeCase, ColumnProps, DynamicAction, fieldValue } from '../index'
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, toSnakeCase, ColumnProps, DynamicAction, fieldValue, restApi } from '../index'
 import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema, getDeleteMutation } from '../apis/graphql/schemas';
 import axios from 'axios';
+import { Alert, showAlert } from '../utils/alerts';
 
 export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   
@@ -48,7 +49,6 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     } else if (this.api instanceof RestApi) {
       // const result = await (this.api as RestApi).get(paginationParams) 
     }
-    // 0674897173 - asha ally
     return null
   }
   
@@ -129,29 +129,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
 
   async getTemplate(): Promise<boolean> {
     try {
-      const response = await axios.get(
-        `${baseUrl}${this.getEndpointPlural()}/template`,
-        {
-          responseType: "blob", // important for binary data
-          headers: {
-            ...accessTokenHeader,
-          },
-        }
-      );
-
-      // Extract filename from Content-Disposition header
-      let filename = `${(this.constructor as typeof CRUDModel).getModelNamePlural()}.csv`;
-      
-      // Create a download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename); // use server-provided name
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url); // cleanup
-      return true;
+      const data = await restApi.downloadFile(`${this.getEndpointPlural()}/template`, {}, true);
+      return data !== null
     } catch (error) {
       console.error(
         `Error downloading template of ${(this.constructor as typeof CRUDModel).getModelName()}:`,
@@ -163,18 +142,19 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
 
   async importTemplate(formData: FormData): Promise<boolean> {
     try {
-      const response = await axios.post(
-        `${baseUrl}${this.getEndpointPlural()}/upload`,
+      const response = await restApi.post(
+        `${this.getEndpointPlural()}/upload`, 
         formData,
         {
           headers: {
-            ...accessTokenHeader,
             "Content-Type": "multipart/form-data",
           },
         }
-      );
-      console.log("Upload success:", response.data);
+      )
+      
+      return response.status
     } catch (error) {
+      showAlert("Import Error", `Something went wrong while importing ${(this.constructor as typeof CRUDModel).getModelNamePlural()}`, Alert.ERROR  )
       console.error("Upload error:", error);
     }
     return true
