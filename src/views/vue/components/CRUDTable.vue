@@ -136,26 +136,26 @@ const getTableActions = () => {
   const tableActions = []
 
   if (tableFeatures.value.import) {
-    tableActions.push({label: 'Template', action: BuiltInAction.Template});
-    tableActions.push({label: 'Import', action: BuiltInAction.Import});
+    tableActions.push({label: 'Template', onClick: actionHandlers[BuiltInAction.Template]});
+    tableActions.push({label: 'Import', onClick: actionHandlers[BuiltInAction.Import]});
   }
 
   if (tableFeatures.value.export) {
-    tableActions.push({label: 'Export PDF', action: BuiltInAction.Create});
-    tableActions.push({label: 'Export CSV', action: BuiltInAction.Create});
-    tableActions.push({label: 'Export XLS', action: BuiltInAction.Create});
+    tableActions.push({label: 'Export PDF', onClick: actionHandlers[BuiltInAction.Create]});
+    tableActions.push({label: 'Export CSV', onClick: actionHandlers[BuiltInAction.Create]});
+    tableActions.push({label: 'Export XLS', onClick: actionHandlers[BuiltInAction.Create]});
   }
 
   if (tableFeatures.value.attachment) {
-    tableActions.push({label: 'Attachments', action: BuiltInAction.Create});
+    tableActions.push({label: 'Attachments', onClick: actionHandlers[BuiltInAction.Create]});
   }
   
   if (tableFeatures.value.workflow) {
-    tableActions.push({label: 'Workflow', action: BuiltInAction.Create});
+    tableActions.push({label: 'Workflow', onClick: actionHandlers[BuiltInAction.Create]});
   }
 
   if (tableFeatures.value.create) {
-    tableActions.push({label: 'Create', action: BuiltInAction.Create});
+    tableActions.push({label: 'Create', onClick: actionHandlers[BuiltInAction.Create]});
   }
 
   return tableActions
@@ -204,7 +204,7 @@ const tableActions = ref(
     ...getTableActions(),
     ...(props.tableActions || [])
   ].map((action) => (
-    { label: action.label, onClick: () => actionHandlers[action.action]() }
+    { label: action.label, icon: action.icon, class: action.class, onClick: (data: any) => action.onClick(data) }
   ))
 );
 
