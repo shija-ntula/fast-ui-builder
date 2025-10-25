@@ -98,15 +98,19 @@ function clearFilter(field: string) {
       <!-- Global Actions -->
       <component :is="theme?.components?.actionsWrapper || 'div'" v-if="tableActions?.length" :class="theme?.classes?.actionsWrapper || 'datatable-actions'">
         <slot name="tableActions" :actions="tableActions">
-          <component
+          <div
             v-for="(action, i) in tableActions"
-            :is="theme?.components?.button || 'button'"
             :key="i"
-            :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
-            @click="action.onClick"
           >
-            {{ action.label }}
-          </component>
+            <component
+              v-if="action.show? action.show() : false"
+              :is="theme?.components?.button || 'button'"
+              :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
+              @click="action.onClick"
+            >
+              {{ action.label }}
+            </component>
+          </div>
         </slot>
       </component>
     </component>
@@ -188,16 +192,20 @@ function clearFilter(field: string) {
                 :actions="rowActions"
                 :data="row"
               />
-              <component
+              <div
                 v-else
                 v-for="(action, i) in rowActions"
-                :is="theme?.components?.button || 'button'"
                 :key="i"
-                :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
-                @click="action.onClick(row)"
               >
-                {{ action.label }}
-              </component>
+                <component
+                  v-if="action.show? action.show() : true"
+                  :is="theme?.components?.button || 'button'"
+                  :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
+                  @click="action.onClick(row)"
+                >
+                  {{ action.label }}
+                </component>
+              </div>
             </slot>
           </component>
         </component>

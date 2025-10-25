@@ -68,10 +68,13 @@ export type DynamicModelAction = {
   action: BuiltInAction; }
 
 export type DynamicAction = { 
+  id?: string;
   label: string, 
   icon?: string; 
   class?: string; 
-  onClick: (data?: any) => void; }
+  show?: (data?: any) => boolean; 
+  onClick: (data?: any) => void; 
+}
 
 export type Pagination = {
   onPageChange(arg0: number): unknown;

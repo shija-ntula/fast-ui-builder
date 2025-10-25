@@ -136,84 +136,92 @@ const getTableActions = () => {
   const tableActions = []
 
   if (tableFeatures.value.import) {
-    tableActions.push({label: 'Template', onClick: actionHandlers[BuiltInAction.Template]});
-    tableActions.push({label: 'Import', onClick: actionHandlers[BuiltInAction.Import]});
+    tableActions.push({id: BuiltInAction.Template, label: 'Template', onClick: actionHandlers[BuiltInAction.Template]});
+    tableActions.push({id: BuiltInAction.Import, label: 'Import', onClick: actionHandlers[BuiltInAction.Import]});
   }
 
   if (tableFeatures.value.export) {
-    tableActions.push({label: 'Export PDF', onClick: actionHandlers[BuiltInAction.Create]});
-    tableActions.push({label: 'Export CSV', onClick: actionHandlers[BuiltInAction.Create]});
-    tableActions.push({label: 'Export XLS', onClick: actionHandlers[BuiltInAction.Create]});
-  }
-
-  if (tableFeatures.value.attachment) {
-    tableActions.push({label: 'Attachments', onClick: actionHandlers[BuiltInAction.Create]});
-  }
-  
-  if (tableFeatures.value.workflow) {
-    tableActions.push({label: 'Workflow', onClick: actionHandlers[BuiltInAction.Create]});
+    tableActions.push({id: BuiltInAction.Create, label: 'Export PDF', onClick: actionHandlers[BuiltInAction.Create]});
+    tableActions.push({id: BuiltInAction.Create, label: 'Export CSV', onClick: actionHandlers[BuiltInAction.Create]});
+    tableActions.push({id: BuiltInAction.Create, label: 'Export XLS', onClick: actionHandlers[BuiltInAction.Create]});
   }
 
   if (tableFeatures.value.create) {
-    tableActions.push({label: 'Create', onClick: actionHandlers[BuiltInAction.Create]});
+    tableActions.push({id: BuiltInAction.Create, label: 'Create', onClick: actionHandlers[BuiltInAction.Create]});
   }
 
-  return tableActions
+  const custom = props.tableActions || []
+
+  // Merge logic
+  const merged = tableActions.map(def => {
+    const override = custom.find(c => c.id === def.id)
+    return override ? { ...def, ...override } : def
+  })
+
+  // Add any custom actions that don't exist in defaults
+  const extras = custom.filter(c => !tableActions.some(d => d.id === c.id))
+
+  return [...merged, ...extras]
 }
 
 const getRowActions = () => {
   const rowActions = []
 
   if (tableFeatures.value.view) {
-    rowActions.push({label: 'View', onClick: actionHandlers[BuiltInAction.View]});
+    rowActions.push({id: BuiltInAction.View, label: 'View', onClick: actionHandlers[BuiltInAction.View]});
   }
 
   if (tableFeatures.value.update) {
-    rowActions.push({label: 'Update', onClick: actionHandlers[BuiltInAction.Update]});
+    rowActions.push({id: BuiltInAction.Update, label: 'Update', onClick: actionHandlers[BuiltInAction.Update]});
   }
 
   if (tableFeatures.value.delete) {
-    rowActions.push({label: 'Delete', onClick: actionHandlers[BuiltInAction.Delete]});
+    rowActions.push({id: BuiltInAction.Delete, label: 'Delete', onClick: actionHandlers[BuiltInAction.Delete]});
   }
 
-  if (tableFeatures.value.attachment) {
-    rowActions.push(...[
-      {label: 'Attach', onClick: actionHandlers[BuiltInAction.Create]},
-      {label: 'Attachments', onClick: actionHandlers[BuiltInAction.Create]}
-    ]);
-  }
-  
-  if (tableFeatures.value.workflow) {
-    rowActions.push(...[
-      {label: 'Submit', onClick: actionHandlers[BuiltInAction.Create]},
-      {label: 'Track', onClick: actionHandlers[BuiltInAction.Create]},
-    ]);
-  }
+  const custom = props.rowActions || []
 
-  if (props.resource.customActions) {
-    rowActions.push(...props.resource.customActions);
-  }
+  // Merge logic
+  const merged = rowActions.map(def => {
+    const override = custom.find(c => c.id === def.id)
+    return override ? { ...def, ...override } : def
+  })
 
-  return rowActions
+  // Add any custom actions that don't exist in defaults
+  const extras = custom.filter(c => !rowActions.some(d => d.id === c.id))
+
+  return [...merged, ...extras]
 }
 
 const dataItems = ref<any[]>([]);
 const columns = ref<ColumnDef[]>(props.columns || props.resource.getColumns());
 const tableActions = ref(
   [
-    ...getTableActions(),
-    ...(props.tableActions || [])
+    ...getTableActions()
   ].map((action) => (
-    { label: action.label, icon: action.icon, class: action.class, onClick: (data: any) => action.onClick(data) }
+    { 
+      id: action.id,
+      label: action.label, 
+      icon: action.icon, 
+      class: action.class, 
+      show: (data: any) => action.show? action.show(data) : true,
+      onClick: (data: any) => action.onClick(data),
+    }
   ))
 );
 
 const rowActions = ref(
   [
-    ...getRowActions(),
-    ...(props.rowActions || [])
+    ...getRowActions()
   ].map((action) => (
-    { label: action.label, icon: action.icon, class: action.class, onClick: (data: any) => action.onClick(data) }
+    { 
+      id: action.id,
+      label: action.label, 
+      icon: action.icon, 
+      class: action.class, 
+      show: (data: any) => action.show? action.show(data) : true,
+      onClick: (data: any) => action.onClick(data) 
+    }
   ))
 );
 
