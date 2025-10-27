@@ -6,6 +6,16 @@ export const debounce = <T extends (...args: any[]) => void>(fn: T, delay = 500)
   }
 }
 
+export const toCamelCase = (name: string): string => {
+  if (!name) return name
+
+  return name
+    // Replace underscores, dashes, or spaces followed by a letter → uppercase that letter
+    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
+    // Ensure the first letter is lowercase
+    .replace(/^[A-Z]/, c => c.toLowerCase())
+}
+
 export const toTitle = (str: string) => {
   return (
     str
@@ -96,3 +106,15 @@ export const fieldValue = (col: any, row: any) => {
 
 //   return value;
 // };
+
+export const clearObject = (obj: Record<string, any>) => {
+  for (const key in obj) {
+    if (Array.isArray(obj[key])) {
+      obj[key].length = 0
+    } else if (obj[key] !== null && typeof obj[key] === 'object') {
+      clearObject(obj[key]) // recursive clear
+    } else {
+      obj[key] = '' // set scalar fields to empty string
+    }
+  }
+}

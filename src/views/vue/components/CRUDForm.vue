@@ -100,17 +100,22 @@ const onSubmit = async () => {
     if (firstResult && typeof firstResult === 'object') {
       dataToSubmit = firstResult;
     }
+  } else if(maybeModified && typeof maybeModified === 'object'){
+    dataToSubmit = maybeModified;
   }
 
   // Now apply the possibly modified data
   formState.value = dataToSubmit;
+  let result = null;
 
-  // Submit to model
-  const result = formState.value.id
-    ? await props.modelValue?.update(formState.value)
-    : await props.modelValue?.create(formState.value);
-
-  emit("afterSubmit", !!result?.status);
+  try{
+    // Submit to model
+    result = formState.value.id
+      ? await props.modelValue?.update(formState.value)
+      : await props.modelValue?.create(formState.value);
+  } finally {
+    emit("afterSubmit", !!result?.status);
+  }
 };
 
 const formId = `${props.modelValue?.constructor.getModelName() || "form"}-${Date.now()}`;

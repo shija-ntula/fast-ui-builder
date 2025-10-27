@@ -13,6 +13,8 @@ const props = defineProps<{
   modelValue?: [];
   theme?: DataTableTheme;
   resource: typeof CRUDModel;
+  hiddenColumns?: string[];
+  shownColumns?: string[];
   features?: CRUDFeatures;
   title?: string;
   searchPlaceholder?: string;
@@ -194,7 +196,11 @@ const getRowActions = () => {
 }
 
 const dataItems = ref<any[]>([]);
-const columns = ref<ColumnDef[]>(props.columns || props.resource.getColumns());
+const columns = ref<ColumnDef[]>(
+  (props.columns || props.resource.getColumns())
+    .filter((column) => !props.hiddenColumns?.includes(column.field) || props.shownColumns?.includes(column.field))
+);
+
 const tableActions = ref(
   [
     ...getTableActions()

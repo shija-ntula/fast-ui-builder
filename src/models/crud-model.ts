@@ -1,9 +1,10 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, toSnakeCase, ColumnProps, DynamicAction, fieldValue, restApi } from '../index'
-import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema, getDeleteMutation } from '../apis/graphql/schemas';
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, toSnakeCase, ColumnProps, DynamicAction, fieldValue, restApi, ModelProps, toCamelCase } from '../index'
+import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema, getDeleteMutation, createQueryWithoutFilters, createAttachmentMutation, deleteAttachmentMutation } from '../apis/graphql/schemas';
 import axios from 'axios';
 import { Alert, showAlert } from '../utils/alerts';
+import { camelize } from 'vue';
 
 export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
   
@@ -14,7 +15,6 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     sort: true,
     view: true,
     update: true,
-    formWrapper: FormWapper.MODAL,
     delete: true,
     bulk: true,
     export: true,
@@ -312,18 +312,223 @@ export abstract class WorkflowModel<T extends WorkflowModel<T>> extends CRUDMode
   @ColumnProps({ order: 99 })
   evaluationStatus!: string
 
+  // static features: CRUDFeatures = {
+  //   create: true,
+  //   search: true,
+  //   filter: true,
+  //   sort: true,
+  //   view: true,
+  //   update: true,
+  //   delete: true,
+  //   bulk: true,
+  //   export: true
+  // };
+
+  async fetchEvaluations(paginationParams: PaginationParams = defaultParams, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).query(
+                      `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`,
+                      createQueryWithFilters(
+                        `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`, 
+                        requestFields? getGraphQLFields(requestFields) : (this.constructor as typeof CRUDModel).getGraphqlFields()
+                      ),
+                      paginationParams, 
+                      options
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    return null
+  }
+  
+  async transit(data: EvaluationStatus): Promise<{status: boolean, data: boolean | null}> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).mutate(
+                      `transit${(this.constructor as typeof CRUDModel).getModelName()}`,
+                      getMutationSchema(
+                        `transit${(this.constructor as typeof CRUDModel).getModelName()}`, 
+                        `EvaluationStatus`, 
+                        false, 
+                        null,
+                      ),
+                      data
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).create(data) 
+    }
+
+    return {status: false, data: null}
+  }
+}
+
+export class EvaluationStatus {
+  objectId!: string | number;
+  remark!: string;
+  status!: string;
+}
+
+@ModelProps({ name: 'Attachment' })
+export class Attachment extends CRUDModel<Attachment> {
   static features: CRUDFeatures = {
     create: true,
-    search: true,
-    filter: true,
-    sort: true,
-    view: true,
     update: true,
-    formWrapper: FormWapper.MODAL,
     delete: true,
-    bulk: true,
-    export: true
-  };
+  }
+
+  @ColumnProps({ order: 1 })
+  attachmentType!: string
+
+  @ColumnProps({ order: 6, hidden: true })
+  attachmentTypeId!: string
+
+  @ColumnProps({ order: 1 })
+  attachmentTypeCategory!: string
+
+  @ColumnProps({ order: 1, hidden: true })
+  filePath!: string
+
+  @ColumnProps({ order: 2 })
+  title?: string
+
+  @ColumnProps({ order: 3 })
+  description!: string
+
+  @ColumnProps({ order: 3 })
+  memType!: string
+}
+
+export type AttachmentRequest = {
+  attachmentTypeCategory: "", 
+  description: "", 
+  title: "", 
+  file: {
+    content: "", 
+    name: "", 
+    extension: "", 
+    contentType: ""
+  }
+}
+
+export abstract class AttachmentModel<T extends AttachmentModel<T>> extends CRUDModel<T> {
+
+  static attachmentFileTypes = ['PNG', 'JPG', 'JPEG', 'PDF']
+  static attachmentFileSize = '2MB'
+  static attachmentTypeCategories = []
+
+  async fetchAttachments(id: string | number, options: any, withSignedUrl: boolean): Promise<{itemCount: number, items: Attachment[]} | null> {
+    const variables = { 
+      [`${toCamelCase((this.constructor as typeof CRUDModel).getModelName())}Id`]: id || this.id 
+    }
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).query(
+                      `get${(this.constructor as typeof CRUDModel).getModelName()}Attachments`,
+                      createQueryWithoutFilters(
+                        variables,
+                        `get${(this.constructor as typeof CRUDModel).getModelName()}Attachments`,
+                        `itemCount items {
+                          attachmentType
+                          attachmentTypeCategory
+                          attachmentTypeId
+                          description
+                          filePath
+                          ${withSignedUrl ? 'signedUrl' : ''}
+                          id
+                          memType
+                          title
+                        }`,
+                      ), 
+                      variables,
+                      options
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    return {
+      itemCount: 0,
+      items: []
+    }
+  }
+  
+  async fetchSignedUrl(filePath: string, options: any): Promise<string | null> {
+    const attachmentTypeNameClass = (this.constructor as typeof CRUDModel).getModelName()
+
+    if (this.api instanceof GraphQLApi) {
+      return await (activeApi as GraphQLApi).query(
+        `download${attachmentTypeNameClass}Attachment`,
+        createQueryWithoutFilters(
+          { filePath: filePath },
+          `download${attachmentTypeNameClass}Attachment`,
+        ),
+        { filePath: filePath },
+        options,
+      )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    return null
+  }
+
+  async uploadAttachment(id: string | number, attachmentPayload: Record<string, any>, options: any): Promise<boolean | null> {
+    const attachmentTypeNameClass = (this.constructor as typeof CRUDModel).getModelName()
+    const attachmentTypeNameCamel = toCamelCase(attachmentTypeNameClass)
+
+    if (this.api instanceof GraphQLApi) {
+      return await (activeApi as GraphQLApi).mutate(
+        `upload${attachmentTypeNameClass}Attachment`,
+        createAttachmentMutation(
+          `upload${attachmentTypeNameClass}Attachment`,
+          `${attachmentTypeNameCamel}Id`,
+          `${attachmentTypeNameClass}Attachment`,
+        ),
+        attachmentPayload,
+        options,
+        { [`${attachmentTypeNameCamel}Id`]: id },
+      )
+                    
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    return false
+  }
+
+  async deleteAttachment(attachmentId: string): Promise<boolean>{
+
+    const attachmentTypeNameClass = (this.constructor as typeof CRUDModel).getModelName()
+    const attachmentTypeNameCamel = toCamelCase(attachmentTypeNameClass)
+
+    if (this.api instanceof GraphQLApi) {
+      const response = await (activeApi as GraphQLApi).delete(
+        `delete${attachmentTypeNameClass}Attachment`,
+        deleteAttachmentMutation(`delete${attachmentTypeNameClass}Attachment`),
+        undefined,
+        {},
+        { attachmentId },
+      )
+
+      return response.status
+                    
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    return false
+  }
+}
+
+export abstract class FullCRUDModel<T extends FullCRUDModel<T>> extends AttachmentModel<T> {
+  @ColumnProps({ order: 99 })
+  evaluationStatus!: string
+
+  // static features: CRUDFeatures = {
+  //   create: true,
+  //   search: true,
+  //   filter: true,
+  //   sort: true,
+  //   view: true,
+  //   update: true,
+  //   delete: true,
+  //   bulk: true,
+  //   export: true
+  // };
 
   async fetchEvaluations(paginationParams: PaginationParams = defaultParams, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
     if (this.api instanceof GraphQLApi) {
@@ -362,13 +567,3 @@ export abstract class WorkflowModel<T extends WorkflowModel<T>> extends CRUDMode
     return {status: false, data: null}
   }
 }
-
-export class EvaluationStatus {
-  objectId!: string | number;
-  remark!: string;
-  status!: string;
-}
-
-export abstract class AttachmentModel<T extends AttachmentModel<T>> extends CRUDModel<T> {}
-
-export abstract class FullCRUDModel<T extends FullCRUDModel<T>> extends WorkflowModel<T> {}

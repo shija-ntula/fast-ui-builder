@@ -114,6 +114,41 @@ function clearFilter(field: string) {
         </slot>
       </component>
     </component>
+    
+    <!-- <component :is="theme?.components?.filterWrapper || 'div'" :class="theme?.classes?.filterWrapper || ''">
+
+      <component :is="theme?.components?.searchWrapper || 'div'" :class="theme?.classes?.searchWrapper || 'datatable-search-wrapper'">
+        <slot name="search">
+          <component
+            v-if="onSearch"
+            :is="theme?.components?.searchInput || 'input'"
+            v-model="searchQuery"
+            type="text"
+            :placeholder="searchPlaceholder || 'Search...'"
+            :class="theme?.classes?.searchInput || 'datatable-search'"
+          />
+        </slot>
+      </component>
+
+
+      <component :is="theme?.components?.actionsWrapper || 'div'" v-if="tableActions?.length" :class="theme?.classes?.actionsWrapper || 'datatable-actions'">
+        <slot name="tableActions" :actions="tableActions">
+          <div
+            v-for="(action, i) in tableActions"
+            :key="i"
+          >
+            <component
+              v-if="action.show? action.show() : false"
+              :is="theme?.components?.button || 'button'"
+              :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
+              @click="action.onClick"
+            >
+              {{ action.label }}
+            </component>
+          </div>
+        </slot>
+      </component>
+    </component> -->
 
     <!-- Table -->
     <component :is="theme?.components?.table || 'table'" :class="theme?.classes?.table || 'datatable-table'">

@@ -7,7 +7,6 @@ export interface CRUDFeatures {
   sort?: boolean;
   view?: boolean;
   update?: boolean;
-  formWrapper: FormWapper;
   delete?: boolean;
   bulk?: boolean;
   import?: boolean;
