@@ -17,6 +17,8 @@ type DefaultModel = any; // or use a base interface
 const props = defineProps<{
   modelValue?: CRUDModel<any>;
   filters?: {field: string, comparator: string, value: string}[];
+  rowComponent?: Component;
+  colComponent?: Component;
   textComponent?: Component;
   enumComponent?: Component;
   selectComponent?: Component;
@@ -104,6 +106,8 @@ const onSubmit = async () => {
     dataToSubmit = maybeModified;
   }
 
+  console.log("Modified form data:", maybeModified, dataToSubmit);
+
   // Now apply the possibly modified data
   formState.value = dataToSubmit;
   let result = null;
@@ -128,121 +132,131 @@ const formId = `${props.modelValue?.constructor.getModelName() || "form"}-${Date
     :id="formId"
     @submit.prevent="onSubmit"
   >
-    <div v-for="field in fields" :key="field.field">
-      <!-- Text/Number/Date -->
-      
-      <div v-if="['text', 'textarea','number'].includes(field.type)" >
-        <component 
-          v-if="textComponent"
-          :is="textComponent" 
-          v-bind="{ 
-            ...field, 
-            placeholder: field.placeholder || `Enter ${field.label}`
-          }"
-          v-model="formState[field.field]"
-        />
-        <div v-else class="form-field">
-          <label :for="field.field">{{ field.label }}</label>
-
-          <!-- Text/Number/Date -->
-          <input
-            :id="field.field" v-model="formState[field.field]" 
-            :placeholder="field.placeholder" 
-            :required="field.required"
+    <component 
+      :is="rowComponent || 'div'" 
+      :gridWidth="modelValue?.constructor.gridWidth || 12"
+    >
+      <component 
+        v-for="field in fields" :key="field.field"
+        :is="colComponent || 'div'"
+        :gridWidth="modelValue?.constructor.gridWidth || 12"
+        :grid="field.grid || 12"
+      >
+        <!-- Text/Number/Date -->
+        
+        <div v-if="['text', 'textarea','number'].includes(field.type)" >
+          <component 
+            v-if="textComponent"
+            :is="textComponent" 
+            v-bind="{ 
+              ...field, 
+              placeholder: field.placeholder || `Enter ${field.label}`
+            }"
+            v-model="formState[field.field]"
           />
-        </div>
-      </div>
-      
-      <div v-else-if="['enum'].includes(field.type) && field.resource" >
-        <component 
-          v-if="enumComponent"
-          :is="enumComponent" 
-          v-bind="{ 
-            ...field, 
-            placeholder: field.placeholder || `Select ${field.label}`
-          }"
-          v-model="formState[field.field]"
-        />
-        <div v-else class="form-field">
-          <label :for="field.field">{{ field.label }}</label>
-          <select
-            :id="field.field" v-model="formState[field.field]" 
-            :placeholder="field.placeholder" 
-            :required="field.required"
-          >
-            <option v-for="entry in enumToOptions(field.resource)" :value="entry.value" :key="entry.value">{{ entry.label }}</option>
-          </select>
-        </div>
-      </div>
-      
-      <div v-else-if="['select'].includes(field.type) && field.resource" >
-        <component 
-          v-if="selectComponent"
-          :is="selectComponent" 
-          v-bind="{ 
-            ...field, 
-            placeholder: field.placeholder || `Select ${field.label}`
-          }"
-          v-model="formState[field.field]"
-          :default-filters="getFieldFilter(field.field)"
-          :formValues="formState"
-          :form-id="formId"
-        />
-        <div v-else class="form-field">
-          <label :for="field.field">{{ field.label }}</label>
-          <select
-            :id="field.field" v-model="formState[field.field]" 
-            :placeholder="field.placeholder" 
-            :required="field.required"
-          >
-            <option v-for="entry in enumToOptions(field.resource)" :value="entry.value" :key="entry.value">{{ entry.label }}</option>
-          </select>
-        </div>
-      </div>
+          <div v-else class="form-field">
+            <label :for="field.field">{{ field.label }}</label>
 
-      <div v-if="['date'].includes(field.type)" >
-        <component 
-          v-if="dateComponent"
-          :is="dateComponent" 
-          v-bind="{ 
-            ...field, 
-            placeholder: field.placeholder || `Choose ${field.label}`
-          }"
-          v-model="formState[field.field]"
-        />
-        <div v-else class="form-field">
-          <label :for="field.field">{{ field.label }}</label>
-          <input
-            type="date"
-            :id="field.field" v-model="formState[field.field]" 
-            :placeholder="field.placeholder" 
-            :required="field.required"
+            <!-- Text/Number/Date -->
+            <input
+              :id="field.field" v-model="formState[field.field]" 
+              :placeholder="field.placeholder" 
+              :required="field.required"
+            />
+          </div>
+        </div>
+        
+        <div v-else-if="['enum'].includes(field.type) && field.resource" >
+          <component 
+            v-if="enumComponent"
+            :is="enumComponent" 
+            v-bind="{ 
+              ...field, 
+              placeholder: field.placeholder || `Select ${field.label}`
+            }"
+            v-model="formState[field.field]"
           />
+          <div v-else class="form-field">
+            <label :for="field.field">{{ field.label }}</label>
+            <select
+              :id="field.field" v-model="formState[field.field]" 
+              :placeholder="field.placeholder" 
+              :required="field.required"
+            >
+              <option v-for="entry in enumToOptions(field.resource)" :value="entry.value" :key="entry.value">{{ entry.label }}</option>
+            </select>
+          </div>
         </div>
-      </div>
-
-      <div v-if="['switch'].includes(field.type)" >
-        <component 
-          v-if="switchComponent"
-          :is="switchComponent" 
-          v-bind="{ 
-            ...field, 
-            placeholder: field.placeholder
-          }"
-          v-model="formState[field.field]"
-        />
-        <div v-else class="form-field">
-          <label :for="field.field">{{ field.label }}</label>
-          <input
-            type="checkbox"
-            :id="field.field" v-model="formState[field.field]" 
-            :placeholder="field.placeholder" 
-            :required="field.required"
+        
+        <div v-else-if="['select'].includes(field.type) && field.resource" >
+          <component 
+            v-if="selectComponent"
+            :is="selectComponent" 
+            v-bind="{ 
+              ...field, 
+              placeholder: field.placeholder || `Select ${field.label}`
+            }"
+            v-model="formState[field.field]"
+            :default-filters="getFieldFilter(field.field)"
+            :formValues="formState"
+            :form-id="formId"
           />
+          <div v-else class="form-field">
+            <label :for="field.field">{{ field.label }}</label>
+            <select
+              :id="field.field" v-model="formState[field.field]" 
+              :placeholder="field.placeholder" 
+              :required="field.required"
+            >
+              <option v-for="entry in enumToOptions(field.resource)" :value="entry.value" :key="entry.value">{{ entry.label }}</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-    </div>
+        <div v-if="['date'].includes(field.type)" >
+          <component 
+            v-if="dateComponent"
+            :is="dateComponent" 
+            v-bind="{ 
+              ...field, 
+              placeholder: field.placeholder || `Choose ${field.label}`
+            }"
+            v-model="formState[field.field]"
+          />
+          <div v-else class="form-field">
+            <label :for="field.field">{{ field.label }}</label>
+            <input
+              type="date"
+              :id="field.field" v-model="formState[field.field]" 
+              :placeholder="field.placeholder" 
+              :required="field.required"
+            />
+          </div>
+        </div>
+
+        <div v-if="['switch'].includes(field.type)" >
+          <component 
+            v-if="switchComponent"
+            :is="switchComponent" 
+            v-bind="{ 
+              ...field, 
+              placeholder: field.placeholder
+            }"
+            v-model="formState[field.field]"
+          />
+          <div v-else class="form-field">
+            <label :for="field.field">{{ field.label }}</label>
+            <input
+              type="checkbox"
+              :id="field.field" v-model="formState[field.field]" 
+              :placeholder="field.placeholder" 
+              :required="field.required"
+            />
+          </div>
+        </div>
+
+      </component>
+    </component>
     <slot></slot>
 
     <!-- <button type="submit">Submit</button> -->
