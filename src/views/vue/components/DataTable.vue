@@ -201,15 +201,13 @@ function clearFilter(field: string) {
             :class="theme?.classes?.headerCell || 'datatable-header-cell'"
           >
             <component
-              v-if="theme?.components?.rowSelector"
-              :is="theme?.components?.rowSelector"
+              :is="theme?.components?.rowSelector || 'input'"
+              type="checkbox"
               :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
               v-model="headerSelected"
               :partialSelection="!allSelected"
               @change="selectAllRows"
-            >
-              
-            </component>
+            />
           </component>
           <component
             :is="theme?.components?.headerCell || 'th'"
@@ -253,8 +251,8 @@ function clearFilter(field: string) {
             :class="theme?.classes?.headerCell || 'datatable-body-cell'"
           >
             <component
-              v-if="theme?.components?.rowSelector"
-              :is="theme?.components?.rowSelector"
+              :is="theme?.components?.rowSelector || 'input'"
+              type="checkbox"
               :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
               v-model="rowsSelected[row.id]"
             />
