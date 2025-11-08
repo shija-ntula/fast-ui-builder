@@ -206,7 +206,10 @@ const rowsSelected = computed({
 
 const columns = ref<ColumnDef[]>(
   (props.columns || props.resource.getColumns())
-    .filter((column) => !props.hiddenColumns?.includes(column.field) || props.shownColumns?.includes(column.field))
+    .filter((column) => props.hiddenColumns && !props.hiddenColumns?.includes(column.field) || 
+                        props.shownColumns && props.shownColumns?.includes(column.field) ||
+                        !props.hiddenColumns && !props.shownColumns
+    )
 );
 
 const tableActions = ref(
