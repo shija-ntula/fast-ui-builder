@@ -14,6 +14,7 @@ export type DataTableComponents = {
   searchWrapper?: string | Component;
   actionsWrapper?: string | Component;
   rowActions?: string | Component;
+  rowSelector?: string | Component;
   searchInput?: string | Component;
   button?: string | Component;
   select?: string | Component;
@@ -29,6 +30,7 @@ export type DataTableClasses = {
     row?: string;
     headerRow?: string;
     headerCell?: string;
+    rowSelector?: string;
     cell?: string;
     headerWrapper?: string;
     searchWrapper?: string;

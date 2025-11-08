@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { ColumnDef, DynamicAction, Pagination } from "../../../utils/types";
 import { DataTableTheme } from '../types';
 import { fieldValue } from '../../../utils/helpers';
 
 const props = defineProps<{
+  selectedRows?: any[];
   theme?: DataTableTheme;
   title?: string;
   searchPlaceholder?: string;
@@ -19,14 +20,54 @@ const props = defineProps<{
   pagination?: Pagination;
 }>();
 
+const emit = defineEmits<{
+  "update:selectedRows": [value: any[]];
+}>();
+
+const headerSelected = ref(false);
+
+const allSelected = computed(() =>
+  props.rows.length > 0 &&
+  props.rows.every(row => rowsSelected.value[row.id])
+)
+
+const rowsSelected = ref<Record<string, boolean>>(
+  Object.fromEntries(props.selectedRows?.map(row => [row.id, true]) || [])
+)
+
+const selectAllRows = () => {
+  rowsSelected.value = Object.fromEntries(props.rows.map(row => [row.id, headerSelected.value]))
+}
+
+watch(
+  rowsSelected,
+  () => {
+    const selections = props.rows.filter(row => rowsSelected.value[row.id])
+    
+    headerSelected.value = selections.length > 0
+    emit("update:selectedRows", selections)
+  },
+  { deep: true }
+)
+
 const searchQuery = ref('');
 
 watch(searchQuery, (value) => {
   props.onSearch?.(value);
+  rowsSelected.value = {}
 });
+
+watch(() => props.pagination, () => {
+  rowsSelected.value = {}
+}, { deep: true });
 
 // 🔎 Column filter state
 const filters = ref<{field: string, comparator: string, value: string}[]>([]);
+
+watch(() => filters, () => {
+  rowsSelected.value = {}
+}, { deep: true });
+
 const showFilterPopup = ref(false);
 const filterValue = ref("");
 const activeColumnIndex = ref<number | null>(null);
@@ -156,6 +197,22 @@ function clearFilter(field: string) {
         <component :is="theme?.components?.headerRow || 'tr'" :class="theme?.classes?.headerRow || 'datatable-header-row'">
           <component
             :is="theme?.components?.headerCell || 'th'"
+            v-if="selectedRows"
+            :class="theme?.classes?.headerCell || 'datatable-header-cell'"
+          >
+            <component
+              v-if="theme?.components?.rowSelector"
+              :is="theme?.components?.rowSelector"
+              :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
+              v-model="headerSelected"
+              :partialSelection="!allSelected"
+              @change="selectAllRows"
+            >
+              
+            </component>
+          </component>
+          <component
+            :is="theme?.components?.headerCell || 'th'"
             v-if="showCount"
             :class="theme?.classes?.headerCell || 'datatable-header-cell'"
           >
@@ -190,6 +247,18 @@ function clearFilter(field: string) {
           :key="rIndex"
           :class="theme?.classes?.row || 'datatable-body-row'"
         >
+          <component
+            :is="theme?.components?.cell || 'td'"
+            v-if="selectedRows"
+            :class="theme?.classes?.headerCell || 'datatable-body-cell'"
+          >
+            <component
+              v-if="theme?.components?.rowSelector"
+              :is="theme?.components?.rowSelector"
+              :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
+              v-model="rowsSelected[row.id]"
+            />
+          </component>
           <component
             :is="theme?.components?.cell || 'td'"
             v-if="showCount"

@@ -11,6 +11,7 @@ import { CRUDFeatures } from '../../../index';
 
 const props = defineProps<{
   modelValue?: [];
+  selectedRows?: any[]
   theme?: DataTableTheme;
   resource: typeof CRUDModel;
   hiddenColumns?: string[];
@@ -37,6 +38,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:modelValue": [value: []];
+  "update:selectedRows": [value: []];
   "update:reload": [value: boolean];
   "onLoading": [loading: boolean, message?: string];
 }>();
@@ -196,6 +198,12 @@ const getRowActions = () => {
 }
 
 const dataItems = ref<any[]>([]);
+
+const rowsSelected = computed({
+  get: () => props.selectedRows,
+  set: (value: []) => emit("update:selectedRows", value),
+})
+
 const columns = ref<ColumnDef[]>(
   (props.columns || props.resource.getColumns())
     .filter((column) => !props.hiddenColumns?.includes(column.field) || props.shownColumns?.includes(column.field))
@@ -365,6 +373,7 @@ const slots = useSlots()
 <template>
   <div>
     <DataTable
+      v-model:selectedRows="rowsSelected"
       :theme="props.theme"
       :title="props.title === undefined? `${props.resource.getModelTitle()} List` : props.title"
       :searchPlaceholder="props.searchPlaceholder"
