@@ -127,15 +127,9 @@ export abstract class DataModel<T> {
         return a === b ? aField.localeCompare(bField) : 0;
       })
       .map(([field, opts]) => ({
-        field,
+        ...opts,
+        field: field,
         header: opts.header || toTitle(field),
-        hidden: opts.hidden,
-        displayFields: opts.displayFields,
-        order: opts.order,
-        headerClass: opts.headerClass,
-        rowClass: opts.rowClass,
-        enum: opts.enum,
-        format: opts.format
       }));
   }
   

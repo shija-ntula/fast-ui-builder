@@ -1,3 +1,4 @@
+import { Comparator, CRUDModel } from "src/models/crud-model";
 import { Component } from "vue";
 
 export interface ModelDefOptions {
@@ -21,6 +22,12 @@ export interface ColumnDefOptions {
   format?: Function | undefined;
   component?: Component;
   formatHtml?: Function | undefined;
+  sortable?: boolean;
+  filterOptions?: {
+    type: string | CRUDModel<any> | Record<string, string | number>;
+    comparators?: Comparator[];
+    options?: any[]; 
+  };
 }
 
 export interface FormFieldDef {

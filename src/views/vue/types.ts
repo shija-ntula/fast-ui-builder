@@ -10,7 +10,8 @@ export type DataTableComponents = {
   headerCell?: string | Component;
   cell?: string | Component;
   headerWrapper?: string | Component;
-  filters?: string | Component;
+  filterSelector?: string | Component;
+  filterList?: string | Component;
   searchWrapper?: string | Component;
   actionsWrapper?: string | Component;
   rowActions?: string | Component;
@@ -33,6 +34,8 @@ export type DataTableClasses = {
     rowSelector?: string;
     cell?: string;
     headerWrapper?: string;
+    filterSelector?: string;
+    filterList?: string;
     searchWrapper?: string;
     searchInput?: string;
     actionsWrapper?: string;

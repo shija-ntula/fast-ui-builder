@@ -48,6 +48,13 @@ export const mergeStaticArray = <T>(cls: any, key: string): T[] => {
   return Array.from(new Set([...parentValues, ...ownValues]));
 };
 
+export const isEnum = (type: any): boolean => {
+  // Enums are objects with string or number values
+  return typeof type === "object" && type !== null && Object.values(type).every(v =>
+    typeof v === "string" || typeof v === "number"
+  );
+}
+
 export const enumToOptions = <T extends Record<string, string | number>>(e: T) => {
   return Object.entries(e).map(([key, label]) => ({
     value: key,   // the enum key

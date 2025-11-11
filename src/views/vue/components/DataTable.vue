@@ -15,6 +15,8 @@ const props = defineProps<{
   tableActions?: DynamicAction[];
   rowActions?: DynamicAction[];
   columns: ColumnDef[];
+  filterColumns?: ColumnDef[];
+  defaultFilters?: {field: string, comparator: string, value: string}[];
   rows: any[];
   showCount?: boolean;
   pagination?: Pagination;
@@ -62,54 +64,14 @@ watch(() => props.pagination, () => {
 }, { deep: true });
 
 // 🔎 Column filter state
-const filters = ref<{field: string, comparator: string, value: string}[]>([]);
+const filters = ref<{field: string, comparator: string, value: string, valueLabel: string}[]>([]);
 
 watch(() => filters, () => {
   rowsSelected.value = {}
+  if (props.onFilter){
+    props.onFilter(filters.value)
+  }
 }, { deep: true });
-
-const showFilterPopup = ref(false);
-const filterValue = ref("");
-const activeColumnIndex = ref<number | null>(null);
-const popupStyle = ref<{ top: string; left: string }>({ top: "0px", left: "0px" });
-
-function openFilterPopup(event: MouseEvent, colIndex: number, field: string) {
-  const target = event.currentTarget as HTMLElement;
-  const rect = target.getBoundingClientRect();
-
-  popupStyle.value = {
-    top: rect.top - 45 + window.scrollY + "px",
-    left: rect.left + "px",
-  };
-
-  activeColumnIndex.value = colIndex;
-  filterValue.value = filters.value.find(f => f.field === field)?.value || "";
-  showFilterPopup.value = true;
-}
-
-function applyFilter(field: string) {
-  if (props.onFilter) {
-    const existing = filters.value.find(f => f.field === field);
-
-    if (existing) {
-      existing.value = filterValue.value;
-    } else {
-      filters.value.push({ field, comparator: "equals", value: filterValue.value });
-    }
-
-    showFilterPopup.value = false;
-    props.onFilter(filters.value);
-  }
-}
-
-const hasFilter = (field: string) => filters.value.some(f => f.field === field);
-
-function clearFilter(field: string) {
-  if (props.onFilter) {
-    filters.value = filters.value.filter(f => f.field !== field);
-    props.onFilter(filters.value);
-  }
-}
 
 </script>
 
@@ -119,6 +81,25 @@ function clearFilter(field: string) {
     <!-- Title -->
     <div v-if="title" :class="theme?.classes?.title || 'datatable-title'">
       <slot name="title">{{ title }}</slot>
+      <slot v-if="filterColumns && filterColumns.length > 0" name="filter-selector">
+        <component
+          :is="theme?.components?.filterSelector || 'div'"
+          :class="theme?.classes?.filterSelector || 'filter-selector'"
+          :columns="filterColumns"
+          :default-filters="defaultFilters"
+          v-model="filters"
+        />
+      </slot>
+    </div>
+
+    <div v-if="filterColumns && filterColumns.length > 0" :class="theme?.classes?.filterList || 'datatable-filter-list'">
+      <slot name="filter-list">
+        <component
+          :is="theme?.components?.filterList || 'div'"
+          :class="theme?.classes?.filterList || 'filter-list'"
+          v-model="filters"
+        />
+      </slot>
     </div>
 
     <component :is="theme?.components?.headerWrapper || 'div'" :class="theme?.classes?.headerWrapper || ''">

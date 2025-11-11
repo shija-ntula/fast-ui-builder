@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, defineProps, watch, reactive, computed, useSlots } from 'vue';
 import DataTable from './DataTable.vue';
-import { defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
+import { Comparator, defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
 import { BuiltInAction, ColumnDef, DynamicAction, Pagination } from '../../../utils/types';
 import { debounce, toTitle } from '../../../utils/helpers';
 import { get } from 'http';
@@ -16,6 +16,7 @@ const props = defineProps<{
   resource: typeof CRUDModel;
   hiddenColumns?: string[];
   shownColumns?: string[];
+  filterColumns?: string[];
   features?: CRUDFeatures;
   title?: string;
   searchPlaceholder?: string;
@@ -212,6 +213,32 @@ const columns = ref<ColumnDef[]>(
     )
 );
 
+const getDefaultComparators = (type: any) => {
+  if (type === 'switch') {
+    return [Comparator.EXACT, Comparator.NOT_EQUAL, Comparator.IS_NULL];
+  } else if (type === 'text') {
+    return [Comparator.EXACT, Comparator.NOT_EQUAL, Comparator.I_CONTAINS, Comparator.STARTS_WITH, Comparator.ENDS_WITH, Comparator.CONTAINS, Comparator.IS_NULL, Comparator.EXCLUDE];
+  } else if (type === 'number') {
+    return [Comparator.EXACT, Comparator.NOT_EQUAL, Comparator.GREATER_OR_EQUAL, Comparator.LESS_OR_EQUAL, Comparator.IS_NULL, Comparator.EXCLUDE];
+  } else if (type === 'date') {
+    return [Comparator.GREATER_OR_EQUAL, Comparator.LESS_OR_EQUAL, Comparator.IS_NULL, Comparator.EXCLUDE];
+  } else {
+    return [Comparator.EXACT, Comparator.NOT_EQUAL, Comparator.IN, Comparator.NOT_IN, Comparator.IS_NULL, Comparator.EXCLUDE];
+  }
+}
+
+const shownFilterColumns = computed(() => <ColumnDef[]>(columns.value.filter((column) => 
+                            column.filterOptions !== undefined &&
+                            (props.filterColumns === undefined || 
+                              props.filterColumns?.includes(column.field))).map((column) => ({
+                                ...column,
+                                field: typeof column.filterOptions?.type?.getColumns === 'function' ? `${column.field}_id` : column.field,
+                                filterOptions: {
+                                  ...column.filterOptions,
+                                  comparators: column.filterOptions?.comparators || getDefaultComparators(column.filterOptions?.type)
+                                }
+                              }))));
+
 const tableActions = ref(
   [
     ...getTableActions()
@@ -273,17 +300,17 @@ const searchColumns = computed<string[]>(() => {
     : []
 });
 
-watch(
-  [() => props.defaultFilters, filters],
-  ([newDefaultFilters, newFilters], [oldDefaultFilters, oldFilters]) => {
+// watch(
+//   [() => props.defaultFilters, filters],
+//   ([newDefaultFilters, newFilters], [oldDefaultFilters, oldFilters]) => {
     
-    // do something when either changes
-    if(newDefaultFilters && !paginationParams.hasFilters(newDefaultFilters) || 
-                          newFilters && !paginationParams.hasFilters(newFilters)) {
-      fetchData()
-    }
-  }
-)
+//     // do something when either changes
+//     if(newDefaultFilters && !paginationParams.hasFilters(newDefaultFilters) || 
+//                           newFilters && !paginationParams.hasFilters(newFilters)) {
+//       fetchData()
+//     }
+//   }
+// )
 
 const preparePagination = () => {
   paginationParams.filters = []
@@ -329,8 +356,8 @@ const search = debounce((query: string) => {
   fetchData()
 }, 500)
 
-const filter = (filters: {field: string, comparator: string, value: string}[]) => {
-  paginationParams.addFilters(filters);
+const filter = (newFilters: {field: string, comparator: Comparator, value: string}[]) => {
+  filters.value = newFilters
   fetchData();
 }
 
@@ -381,10 +408,12 @@ const slots = useSlots()
       :title="props.title === undefined? `${props.resource.getModelTitle()} List` : props.title"
       :searchPlaceholder="props.searchPlaceholder"
       :onSearch="searchColumns.length? props.onSearch || search : undefined"
-      :onFilter="tableFeatures.filter? props.onFilter || filter : undefined"
+      :onFilter="props.onFilter || filter"
       :tableActions="tableActions"
       :rowActions="rowActions"
       :columns="columns"
+      :filter-columns="shownFilterColumns"
+      :default-filters="props.defaultFilters"
       :pagination="tableFeatures.pagination? pagination : undefined"
       :show-count="props.showCount === undefined? true : props.showCount"
       :rows="dataItems"
