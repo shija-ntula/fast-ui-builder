@@ -9,6 +9,7 @@ const props = defineProps<{
   theme?: DataTableTheme;
   title?: string;
   searchPlaceholder?: string;
+  noDataMessage?: string;
   onSearch?: (query: string) => void;
   onFilter?: (filters: {field: string, comparator: string, value: string}[]) => void;
   isLoading?: boolean;
@@ -294,7 +295,7 @@ watch(() => filters, () => {
         </component>
         <component :is="theme?.components?.row || 'tr'" v-else>
           <component :is="theme?.components?.cell || 'td'" :colspan="columns.length + Number(showCount) + Number(rowActions?.length)" class="text-center">
-            <slot name="empty">No Data</slot>
+            <slot name="empty">{{ noDataMessage || 'No Data' }}</slot>
           </component>
         </component>
       </component>

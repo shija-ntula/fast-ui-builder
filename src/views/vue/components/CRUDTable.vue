@@ -3,10 +3,8 @@ import { ref, onMounted, defineProps, watch, reactive, computed, useSlots } from
 import DataTable from './DataTable.vue';
 import { Comparator, defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
 import { BuiltInAction, ColumnDef, DynamicAction, Pagination } from '../../../utils/types';
-import { debounce, toTitle } from '../../../utils/helpers';
-import { get } from 'http';
+import { debounce } from '../../../utils/helpers';
 import { DataTableTheme } from '../types';
-import CRUDModal from './CRUDModal.vue';
 import { CRUDFeatures } from '../../../index';
 
 const props = defineProps<{
@@ -20,6 +18,7 @@ const props = defineProps<{
   features?: CRUDFeatures;
   title?: string;
   searchPlaceholder?: string;
+  noDataMessage?: string;
   onSearch?: (query: string) => void;
   onFilter?: (filters: {field: string, comparator: string, value: string}[]) => void;
   tableActions?: DynamicAction[];
@@ -227,7 +226,7 @@ const getDefaultComparators = (type: any) => {
   }
 }
 
-const shownFilterColumns = computed(() => <ColumnDef[]>(columns.value.filter((column) => 
+const shownFilterColumns = computed(() => <ColumnDef[]>(tableFeatures.value.filter && props.resource.getColumns(true).filter((column) => 
                             column.filterOptions !== undefined &&
                             (props.filterColumns === undefined || 
                               props.filterColumns?.includes(column.field))).map((column) => ({
@@ -407,6 +406,7 @@ const slots = useSlots()
       :theme="props.theme"
       :title="props.title === undefined? `${props.resource.getModelTitle()} List` : props.title"
       :searchPlaceholder="props.searchPlaceholder"
+      :no-data-message="props.noDataMessage"
       :onSearch="searchColumns.length? props.onSearch || search : undefined"
       :onFilter="props.onFilter || filter"
       :tableActions="tableActions"

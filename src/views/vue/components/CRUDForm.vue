@@ -49,6 +49,30 @@ const emit = defineEmits<{
 // make a reactive form state
 const formState = ref<Record<string, any>>({});
 
+function resolveDefaultValue(field: FormFieldDef, data: Record<string, any>): any {
+  if(field.type === 'switch'){
+    return false
+  }
+  
+  let value = field.defaultValue;
+  if (typeof value === "string" && value.startsWith("$self.")) {
+    // Extract path after "$self."
+    let path = value.replace("$self.", "");
+
+    const fields = path.split(".");
+    if(fields.length === 1){
+      value = data[fields[0]]
+    } else {
+      const obj = data[fields[0]];
+      fields.shift();
+
+      value = fields.reduce((acc, field) => acc?.[field], obj);
+    }
+  }
+
+  return value
+}
+
 // Patch data
 watch(
   () => props.modelValue,
@@ -58,6 +82,14 @@ watch(
       rawFields.value.forEach(f => {
         const fieldName = f.createField || f.field + (f.type === 'select' ? 'Id' : '')
         formState.value[fieldName] = data[f.field]
+        
+        if(f.type === 'switch' && typeof formState.value[fieldName] !== 'boolean'){
+          formState.value[fieldName] = false
+        }
+        
+        if(!formState.value[fieldName] && f.defaultValue){
+          formState.value[fieldName] = resolveDefaultValue(f, data)
+        }
         if(f.type === 'select' && formState.value[fieldName]){
           formState.value[fieldName] = Array.isArray(data[f.field])? 
                         data[f.field].map((d: any) => d.id) : data[f.field].id

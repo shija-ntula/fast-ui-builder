@@ -25,6 +25,7 @@ export interface ColumnDefOptions {
   sortable?: boolean;
   filterOptions?: {
     type: string | CRUDModel<any> | Record<string, string | number>;
+    fieldPath?: string;
     comparators?: Comparator[];
     options?: any[]; 
   };
@@ -33,6 +34,7 @@ export interface ColumnDefOptions {
 export interface FormFieldDef {
   field: string;
   label?: string;
+  defaultValue?: any;
   displayFields?: string[];
   type: "text" | "number" | "select" | "date" | "textarea" | "checkbox" | "switch";
   createField?: string;

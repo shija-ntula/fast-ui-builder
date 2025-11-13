@@ -20,6 +20,7 @@ export const toTitle = (str: string) => {
   return (
     str
       // Replace underscores with spaces
+      .replace(".", " ")
       .replace(/_/g, " ")
       // Insert a space before any capital letter (camelCase support)
       .replace(/([a-z])([A-Z])/g, "$1 $2")
