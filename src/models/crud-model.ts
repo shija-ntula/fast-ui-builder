@@ -185,7 +185,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                 if (!f) {
                   return undefined;
                 }
-                return `${toSnakeCase(col.field)}__${toSnakeCase(f).replace('.', '__')}`;
+                return `${toSnakeCase(col.field)}__${toSnakeCase(f).replaceAll('.', '__')}`;
               })
               .filter((v): v is string => Boolean(v)); // ✅ removes undefined safely
           }
