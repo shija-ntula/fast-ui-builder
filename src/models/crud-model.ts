@@ -74,7 +74,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     return null
   }
 
-  async create(data: T | T[]): Promise<{status: boolean, data: T | T[] | null}> {
+  async create(data: T | T[], options: any = {showToast: true}): Promise<{status: boolean, data: T | T[] | null}> {
     if (this.api instanceof GraphQLApi) {
       return await (this.api as GraphQLApi).mutate(
                       `create${(this.constructor as typeof CRUDModel).getModelName()}`,
@@ -84,7 +84,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                         Array.isArray(data), 
                         (this.constructor as typeof CRUDModel).getGraphqlFields(),
                       ),
-                      data
+                      data,
+                      options
                     )
     } else if (this.api instanceof RestApi) {
       // const result = await (this.api as RestApi).create(data) 
@@ -93,7 +94,7 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     return {status: false, data: null}
   }
 
-  async update(data: T | T[]): Promise<{status: boolean, data: T | T[] | null}> {
+  async update(data: T | T[], options: any = {showToast: true}): Promise<{status: boolean, data: T | T[] | null}> {
     if (this.api instanceof GraphQLApi) {
       return await (this.api as GraphQLApi).mutate(
                       `update${(this.constructor as typeof CRUDModel).getModelName()}`,
@@ -103,7 +104,8 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                         Array.isArray(data), 
                         (this.constructor as typeof CRUDModel).getGraphqlFields(),
                       ),
-                      data
+                      data,
+                      options
                     )
     } else if (this.api instanceof RestApi) {
       // const result = await (this.api as RestApi).create(data) 
