@@ -126,3 +126,24 @@ export const clearObject = (obj: Record<string, any>) => {
     }
   }
 }
+
+export const removeLastOccurrence = (str: string, toRemove: string) => {
+  const index = str.lastIndexOf(toRemove);
+  if (index === -1) return str; // nothing to remove
+
+  return str.slice(0, index) + str.slice(index + toRemove.length);
+}
+
+export const removeFirstOccurrence = (str: string, toRemove: string) => {
+  const index = str.indexOf(toRemove);
+  if (index === -1) return str;
+
+  return str.slice(index + toRemove.length);
+}
+
+export const removeFirstPath = (str: string) => {
+  const index = str.indexOf('.');
+  if (index === -1) return str;
+
+  return str.slice(index + 1);
+}

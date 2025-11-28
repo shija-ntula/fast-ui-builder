@@ -2,7 +2,7 @@
 import { ref, defineProps, defineEmits, watch, computed, Component } from "vue";
 import { BuiltInAction, type FormFieldDef } from "../../../utils/types";
 import { type CRUDModel } from "src/models/crud-model";
-import { enumToOptions } from "../../../utils/helpers";
+import { enumToOptions, removeLastOccurrence } from "../../../utils/helpers";
 
 // Define a generic interface for your props
 interface Props<T extends CRUDModel<T>> {
@@ -101,7 +101,7 @@ watch(
 );
 
 const getFieldFilter = (field: string) => {
-  return props.filters?.filter(f => f.field === field);
+  return props.filters?.filter(f => f.field === field || f.field.startsWith(removeLastOccurrence(field, 'Id') + '.'));
 }
 
 const onInput = (field: string, value: any) => {
