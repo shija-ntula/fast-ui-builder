@@ -80,8 +80,8 @@ watch(() => filters, () => {
   <component :is="theme?.components?.wrapper || 'div'" :class="theme?.classes?.wrapper || 'datatable-wrapper'">
     
     <!-- Title -->
-    <div v-if="title" :class="theme?.classes?.title || 'datatable-title'">
-      <slot name="title">{{ title }}</slot>
+    <div :class="theme?.classes?.title || 'datatable-title'">
+      <slot v-if="title" name="title">{{ title }}</slot>
       <slot v-if="filterColumns && filterColumns.length > 0" name="filter-selector">
         <component
           :is="theme?.components?.filterSelector || 'div'"
