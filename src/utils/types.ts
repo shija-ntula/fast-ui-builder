@@ -49,6 +49,17 @@ export interface FormFieldDef {
   format?: Function | undefined;
 }
 
+export interface FilterOptions {
+  name: string;
+  type: string | CRUDModel<any> | Record<string, string | number>;
+  displayFields?: string[];
+  path?: string;
+  comparators?: Comparator[];
+  values?: any[];
+  options?: Record<string, any>; 
+  format?: Function | undefined;
+}
+
 // Allow also just a field name
 export type ColumnDef = string | ColumnDefOptions;
 

@@ -44,7 +44,7 @@ export class RestApi implements ApiInterface {
     return response.data
   }
 
-  async downloadFile(endpoint: string, config?: AxiosRequestConfig, autoSave = true): Promise<Blob> {
+  async downloadFile(endpoint: string, config?: AxiosRequestConfig, autoSave = true, fallbackFilename = 'downloaded-file'): Promise<Blob> {
     const response: AxiosResponse<Blob> = await this.restClient.get(endpoint, {
       ...config,
       responseType: 'blob',
@@ -54,11 +54,18 @@ export class RestApi implements ApiInterface {
 
     if (autoSave && typeof window !== 'undefined') {
       const contentDisposition = response.headers['content-disposition']
-      let filename = 'downloaded-file'
+      let filename = fallbackFilename
 
       if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/)
-        if (match?.[1]) filename = match[1]
+        const utf8Match = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)
+        if (utf8Match?.[1]) {
+          filename = decodeURIComponent(utf8Match[1])
+        } else {
+          const asciiMatch = contentDisposition.match(/filename\s*=\s*"?([^";]+)"?/i)
+          if (asciiMatch?.[1]) {
+            filename = asciiMatch[1]
+          }
+        }
       }
 
       const url = window.URL.createObjectURL(blob)

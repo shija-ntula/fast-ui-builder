@@ -37,7 +37,15 @@ export function createQuery(queryName: string, requestFields: string, responseFi
   `;
 }
 
-export function createQueryWithFilters(queryName: string, queryFields: string) {
+export function createQueryWithFilters(queryName: string, queryFields: string, variables: Record<string, any> | undefined = undefined) {
+  
+  const variableDefinitions = variables ? Object.keys(variables)
+                                      .map((key) => `$${key}: ${getGraphQLType(variables[key])}`)
+                                      .join(', ') : null;
+
+  const variableArgs = variables? Object.keys(variables)
+                                      .map((key) => `${key}: $${key}`)
+                                      .join(', ') : null;
   return gql`
       query ${queryName}(
         $filters: [String!],
@@ -46,7 +54,8 @@ export function createQueryWithFilters(queryName: string, queryFields: string) {
         $searchColumns: [String!],
         $searchQuery: String,
         $sortBy: String,
-        $sortOrder: String
+        $sortOrder: String,
+        ${variableDefinitions || ''}
       ) {
         ${queryName}(
           filters: $filters,
@@ -55,7 +64,8 @@ export function createQueryWithFilters(queryName: string, queryFields: string) {
           searchColumns: $searchColumns,
           searchQuery: $searchQuery,
           sortBy: $sortBy,
-          sortOrder: $sortOrder
+          sortOrder: $sortOrder,
+          ${variableArgs || ''}
         ) {
           data {
             itemCount
@@ -213,13 +223,13 @@ export function getAttachmentQuery(queryName: string, parentIdVariableName: stri
 }
 
 
-export function createAttachmentMutation(mutationQueryName: string, parentIdVariableName: string, attachmentType: string) {
-
+export function createAttachmentMutation(mutationQueryName: string, parentIdVariableName: string, attachmentType: string, requestFields: string | undefined = undefined) {
+  if(!requestFields) requestFields = attachmentFields
   const mutationString = `
       mutation ${mutationQueryName}($inputData: ${attachmentType}!, $${parentIdVariableName}: String!) {
         ${mutationQueryName}(inputData: $inputData, ${parentIdVariableName}: $${parentIdVariableName}) {
           data {
-             ${attachmentFields}
+             ${requestFields}
           }
           code
           message

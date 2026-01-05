@@ -1,6 +1,6 @@
 import { ApiInterface } from '../interfaces/api'
 import { DataModel } from './data-model'
-import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, toSnakeCase, ColumnProps, DynamicAction, fieldValue, restApi, ModelProps, toCamelCase } from '../index'
+import { activeApi, FormWapper, CRUDFeatures, GraphQLApi, RestApi, BuiltInAction, toSnakeCase, ColumnProps, DynamicAction, fieldValue, restApi, ModelProps, toCamelCase, FilterOptions } from '../index'
 import { createQueryWithFilters, createGetByIdQuery, getGraphQLFields, getMutationSchema, getDeleteMutation, createQueryWithoutFilters, createAttachmentMutation, deleteAttachmentMutation } from '../apis/graphql/schemas';
 import axios from 'axios';
 import { Alert, showAlert } from '../utils/alerts';
@@ -31,6 +31,11 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     super()
     this.api = api || activeApi
   }
+
+  getFilterOptions(): FilterOptions[] {
+    return []
+  }
+
   async fetchAll(paginationParams: PaginationParams = defaultParams, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
     if (this.api instanceof GraphQLApi) {
       return await (this.api as GraphQLApi).query(
@@ -44,6 +49,28 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
                             : (this.constructor as typeof CRUDModel).getGraphqlFields()
                       ),
                       paginationParams, 
+                      options
+                    )
+    } else if (this.api instanceof RestApi) {
+      // const result = await (this.api as RestApi).get(paginationParams) 
+    }
+    return null
+  }
+
+  async fetchAllWithParams(paginationParams: PaginationParams = defaultParams, params: Record<string, any>, options: any, requestFields: {field: string}[]): Promise<{itemCount: number, items: T[]} | null> {
+    if (this.api instanceof GraphQLApi) {
+      return await (this.api as GraphQLApi).query(
+                      `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`,
+                      createQueryWithFilters(
+                        `getAll${(this.constructor as typeof CRUDModel).getModelNamePlural()}`, 
+                        requestFields? 
+                          typeof requestFields === 'string' ? 
+                            requestFields 
+                          : getGraphQLFields(requestFields) 
+                            : (this.constructor as typeof CRUDModel).getGraphqlFields(),
+                        params
+                      ),
+                      {...paginationParams, ...params},
                       options
                     )
     } else if (this.api instanceof RestApi) {
@@ -129,9 +156,10 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     return false
   }
 
-  async getTemplate(): Promise<boolean> {
+  async getTemplate(params: string | string[] = [], fallbackFilename: string = `${(this.constructor as typeof CRUDModel).getModelName()}-template`): Promise<boolean> {
     try {
-      const data = await restApi.downloadFile(`${this.getEndpointPlural()}/template`, {}, true);
+      if(!Array.isArray(params)) params = [params]
+      const data = await restApi.downloadFile(`${this.getEndpointPlural()}/template${params.length > 0 ? '/' : ''}${params.join('/')}`, {}, true, fallbackFilename);
       return data !== null
     } catch (error) {
       console.error(
@@ -282,7 +310,7 @@ export class PaginationParams {
   addFilters(filter: Filter | Filter[]): void {
     const filters = Array.isArray(filter) ? filter : [filter];
     for (const c of filters) {
-      const filterString = `${toSnakeCase(c.field).replace('.', '__')},${c.comparator},${c.value}`;
+      const filterString = `${toSnakeCase(c.field).replaceAll('.', '__')},${c.comparator},${c.value}`;
       if (!this.filters.includes(filterString)) {
         this.filters.push(filterString);
       }
@@ -293,7 +321,7 @@ export class PaginationParams {
     const filters = Array.isArray(filter) ? filter : [filter];
     let hasAll = true
     for (const c of filters) {
-      const filterString = `${toSnakeCase(c.field).replace('.', '__')},${c.comparator},${c.value}`;
+      const filterString = `${toSnakeCase(c.field).replaceAll('.', '__')},${c.comparator},${c.value}`;
       hasAll &&= this.filters.includes(filterString)
     }
     return hasAll
@@ -303,7 +331,7 @@ export class PaginationParams {
    * Remove a search column if it exists.
    */
   removeFilters(field: string): void {
-    this.filters = this.filters.filter(c => !c.startsWith(`${toSnakeCase(field).replace('.', '__')},`));
+    this.filters = this.filters.filter(c => !c.startsWith(`${toSnakeCase(field).replaceAll('.', '__')},`));
   }
 }
 
@@ -470,7 +498,7 @@ export abstract class AttachmentModel<T extends AttachmentModel<T>> extends CRUD
     return null
   }
 
-  async uploadAttachment(id: string | number, attachmentPayload: Record<string, any>, options: any): Promise<boolean | null> {
+  async uploadAttachment(id: string | number, attachmentPayload: Record<string, any>, options: any, requestFields?: string): Promise<boolean | null> {
     const attachmentTypeNameClass = (this.constructor as typeof CRUDModel).getModelName()
     const attachmentTypeNameCamel = toCamelCase(attachmentTypeNameClass)
 
@@ -481,6 +509,7 @@ export abstract class AttachmentModel<T extends AttachmentModel<T>> extends CRUD
           `upload${attachmentTypeNameClass}Attachment`,
           `${attachmentTypeNameCamel}Id`,
           `${attachmentTypeNameClass}Attachment`,
+          requestFields
         ),
         attachmentPayload,
         options,

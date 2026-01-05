@@ -2,7 +2,7 @@
 import { ref, onMounted, defineProps, watch, reactive, computed, useSlots } from 'vue';
 import DataTable from './DataTable.vue';
 import { Comparator, defaultParams, PaginationParams, type CRUDModel } from '../../../models/crud-model';
-import { BuiltInAction, ColumnDef, DynamicAction, Pagination } from '../../../utils/types';
+import { BuiltInAction, ColumnDef, DynamicAction, FilterOptions, Pagination } from '../../../utils/types';
 import { debounce } from '../../../utils/helpers';
 import { DataTableTheme } from '../types';
 import { CRUDFeatures } from '../../../index';
@@ -14,7 +14,7 @@ const props = defineProps<{
   resource: typeof CRUDModel;
   hiddenColumns?: string[];
   shownColumns?: string[];
-  filterColumns?: string[];
+  shownFilters?: string[];
   features?: CRUDFeatures;
   title?: string;
   searchPlaceholder?: string;
@@ -28,6 +28,7 @@ const props = defineProps<{
   reload?: boolean;
   sortBy?: string;
   defaultFilters?: {field: string, comparator: string, value: string}[];
+  fetchParams?: Record<string, any>;
   onCreate?: (model: typeof props.resource) => void;
   onView?: (resource: typeof props.resource, id: string) => void;
   onUpdate?: (model: typeof props.resource) => void;
@@ -226,17 +227,27 @@ const getDefaultComparators = (type: any) => {
   }
 }
 
-const shownFilterColumns = computed(() => <ColumnDef[]>(tableFeatures.value.filter && props.resource.getColumns(true).filter((column) => 
-                            column.filterOptions !== undefined &&
-                            (props.filterColumns === undefined || 
-                              props.filterColumns?.includes(column.field))).map((column) => ({
-                                ...column,
-                                field: typeof column.filterOptions?.type?.getColumns === 'function' ? `${column.field}_id` : column.field,
-                                filterOptions: {
-                                  ...column.filterOptions,
-                                  comparators: column.filterOptions?.comparators || getDefaultComparators(column.filterOptions?.type)
-                                }
-                              }))));
+// const filteredFilterOptions = computed(() => <ColumnDef[]>(tableFeatures.value.filter && props.resource.getColumns(true).filter((column) => 
+//                             column.filterOptions !== undefined &&
+//                             (props.shownFilters === undefined || 
+//                               props.shownFilters?.includes(column.field))).map((column) => ({
+//                                 ...column,
+//                                 field: typeof column.filterOptions?.type?.getColumns === 'function' ? `${column.field}_id` : column.field,
+//                                 filterOptions: {
+//                                   ...column.filterOptions,
+//                                   comparators: column.filterOptions?.comparators || getDefaultComparators(column.filterOptions?.type)
+//                                 }
+//                               }))));
+
+const filteredFilterOptions = computed(() => <FilterOptions[]>(
+  (new props.resource()).getFilterOptions().filter((filter: FilterOptions) => (
+    props.shownFilters === undefined || props.shownFilters?.includes(filter.name))).map((filter: FilterOptions) => ({
+      ...filter,
+      name: (typeof filter?.type?.getColumns === 'function' && !(filter.name.endsWith('Id') && filter.name.endsWith('_id'))) ? `${filter.name}_id` : filter.name,
+      comparators: filter?.comparators || getDefaultComparators(filter?.type)
+    })
+  )
+));
 
 const tableActions = ref(
   [
@@ -328,7 +339,12 @@ async function fetchData() {
     preparePagination()
 
     const instance = new props.resource();
-    const data = await instance.fetchAll(paginationParams);
+    let data = []
+    if(props.fetchParams){
+      data = await instance.fetchAllWithParams(paginationParams, props.fetchParams);
+    } else {
+      data = await instance.fetchAll(paginationParams);
+    }
 
     if (requestId !== currentRequest) return; // stale request, ignore
 
@@ -412,7 +428,7 @@ const slots = useSlots()
       :tableActions="tableActions"
       :rowActions="rowActions"
       :columns="columns"
-      :filter-columns="shownFilterColumns"
+      :filter-options="filteredFilterOptions"
       :default-filters="props.defaultFilters"
       :pagination="tableFeatures.pagination? pagination : undefined"
       :show-count="props.showCount === undefined? true : props.showCount"
@@ -423,7 +439,7 @@ const slots = useSlots()
         :key="name"
         #[name]="{row}"
       >
-        <slot :name="name" v-bind="row" />
+        <slot :name="name" v-bind="row ?? {}" />
       </template>
     </DataTable>
   </div>

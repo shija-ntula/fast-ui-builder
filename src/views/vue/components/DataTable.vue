@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { ColumnDef, DynamicAction, Pagination } from "../../../utils/types";
+import { ColumnDef, DynamicAction, FilterOptions, Pagination } from "../../../utils/types";
 import { DataTableTheme } from '../types';
 import { fieldValue } from '../../../utils/helpers';
 
@@ -16,7 +16,7 @@ const props = defineProps<{
   tableActions?: DynamicAction[];
   rowActions?: DynamicAction[];
   columns: ColumnDef[];
-  filterColumns?: ColumnDef[];
+  filterOptions?: FilterOptions[];
   defaultFilters?: {field: string, comparator: string, value: string}[];
   rows: any[];
   showCount?: boolean;
@@ -82,22 +82,23 @@ watch(() => filters, () => {
     <!-- Title -->
     <div :class="theme?.classes?.title || 'datatable-title'">
       <slot v-if="title" name="title">{{ title }}</slot>
-      <slot v-if="filterColumns && filterColumns.length > 0" name="filter-selector">
+      <slot v-if="filterOptions && filterOptions.length > 0" name="filter-selector">
         <component
           :is="theme?.components?.filterSelector || 'div'"
           :class="theme?.classes?.filterSelector || 'filter-selector'"
-          :columns="filterColumns"
+          :filterOptions="filterOptions"
           :default-filters="defaultFilters"
           v-model="filters"
         />
       </slot>
     </div>
 
-    <div v-if="filterColumns && filterColumns.length > 0" :class="theme?.classes?.filterList || 'datatable-filter-list'">
+    <div v-if="filterOptions && filterOptions.length > 0" :class="theme?.classes?.filterList || 'datatable-filter-list'">
       <slot name="filter-list">
         <component
           :is="theme?.components?.filterList || 'div'"
           :class="theme?.classes?.filterList || 'filter-list'"
+          :filterOptions="filterOptions"
           v-model="filters"
         />
       </slot>
