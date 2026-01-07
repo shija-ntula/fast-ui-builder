@@ -156,10 +156,13 @@ export abstract class CRUDModel<T extends CRUDModel<T>> extends DataModel<T> {
     return false
   }
 
-  async getTemplate(params: string | string[] = [], fallbackFilename: string = `${(this.constructor as typeof CRUDModel).getModelName()}-template`): Promise<boolean> {
+  async getTemplate(params: string | string[] = [], fallbackFilename: string = `${(this.constructor as typeof CRUDModel).getModelName()}-template`, endpoint?: string): Promise<boolean> {
     try {
       if(!Array.isArray(params)) params = [params]
-      const data = await restApi.downloadFile(`${this.getEndpointPlural()}/template${params.length > 0 ? '/' : ''}${params.join('/')}`, {}, true, fallbackFilename);
+
+      const url = endpoint? endpoint : `${this.getEndpointPlural()}/template${params.length > 0 ? '/' : ''}${params.join('/')}`
+
+      const data = await restApi.downloadFile(url, {}, true, fallbackFilename);
       return data !== null
     } catch (error) {
       console.error(
