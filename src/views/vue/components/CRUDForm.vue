@@ -25,7 +25,14 @@ const props = defineProps<{
   dateComponent?: Component;
   switchComponent?: Component;
   formComponent?: Component;
+  formProps?: Record<string, any>;
 }>();
+
+const internalFormRef = ref()
+
+defineExpose({
+  form: internalFormRef
+})
 
 const rawFields = computed<FormFieldDef[]>(() => {
   return (props.modelValue?.constructor.getFields(
@@ -109,58 +116,93 @@ const onInput = (field: string, value: any) => {
   emit("update:modelValue", formState.value);
 };
 
+// const onSubmit = async () => {
+//   // Ask parent to modify or validate form data before submit
+//   let dataToSubmit = { ...formState.value };
+
+//   // If parent listener returns something, use it
+//   const maybeModified = emit("beforeSubmit", dataToSubmit);
+
+//   // Vue emit doesn’t return a promise automatically; you can handle async parent
+//   // by letting the parent set up `@beforeSubmit` as an async listener returning a Promise.
+//   if (maybeModified instanceof Promise) {
+//     try {
+//       const result = await maybeModified;
+//       if (result && typeof result === 'object') {
+//         dataToSubmit = result;
+//       }
+//     } catch (err) {
+//       console.error("Error in beforeSubmit:", err);
+//       return; // stop submission
+//     }
+//   } else if (Array.isArray(maybeModified) && maybeModified[0]) {
+//     // Vue emits return an array of listener results
+//     const firstResult = maybeModified[0];
+//     if (firstResult && typeof firstResult === 'object') {
+//       dataToSubmit = firstResult;
+//     }
+//   } else if(maybeModified && typeof maybeModified === 'object'){
+//     dataToSubmit = maybeModified;
+//   }
+
+//   console.log("Modified form data:", maybeModified, dataToSubmit);
+
+//   // Now apply the possibly modified data
+//   formState.value = dataToSubmit;
+//   let result = null;
+
+//   try{
+//     // Submit to model
+//     result = formState.value.id
+//       ? await props.modelValue?.update(formState.value)
+//       : await props.modelValue?.create(formState.value);
+//   } finally {
+//     emit("afterSubmit", !!result?.status);
+//   }
+// };
+
 const onSubmit = async () => {
-  // Ask parent to modify or validate form data before submit
-  let dataToSubmit = { ...formState.value };
-
-  // If parent listener returns something, use it
-  const maybeModified = emit("beforeSubmit", dataToSubmit);
-
-  // Vue emit doesn’t return a promise automatically; you can handle async parent
-  // by letting the parent set up `@beforeSubmit` as an async listener returning a Promise.
-  if (maybeModified instanceof Promise) {
-    try {
-      const result = await maybeModified;
-      if (result && typeof result === 'object') {
-        dataToSubmit = result;
-      }
-    } catch (err) {
-      console.error("Error in beforeSubmit:", err);
-      return; // stop submission
+  const ctx = {
+    data: { ...formState.value },
+    cancelled: false,
+    cancel() {
+      this.cancelled = true
     }
-  } else if (Array.isArray(maybeModified) && maybeModified[0]) {
-    // Vue emits return an array of listener results
-    const firstResult = maybeModified[0];
-    if (firstResult && typeof firstResult === 'object') {
-      dataToSubmit = firstResult;
-    }
-  } else if(maybeModified && typeof maybeModified === 'object'){
-    dataToSubmit = maybeModified;
   }
 
-  console.log("Modified form data:", maybeModified, dataToSubmit);
+  emit('beforeSubmit', ctx)
 
-  // Now apply the possibly modified data
-  formState.value = dataToSubmit;
-  let result = null;
+  if (ctx.cancelled) {
+    return
+  }
 
-  try{
-    // Submit to model
+  // proceed with submission
+  formState.value = ctx.data
+
+  let result = null
+  try {
     result = formState.value.id
       ? await props.modelValue?.update(formState.value)
-      : await props.modelValue?.create(formState.value);
+      : await props.modelValue?.create(formState.value)
   } finally {
-    emit("afterSubmit", !!result?.status);
+    emit('afterSubmit', !!result?.status)
   }
-};
+}
 
 const formId = `${props.modelValue?.constructor.getModelName() || "form"}-${Date.now()}`;
 
 </script>
 
 <template>
-  <component 
+  <!-- <component 
     :is="formComponent || 'form'" 
+    :id="formId"
+    @submit.prevent="onSubmit"
+  > -->
+  <component 
+    :is="formComponent || 'form'"
+    v-bind="formProps"
+    ref="internalFormRef"
     :id="formId"
     @submit.prevent="onSubmit"
   >
