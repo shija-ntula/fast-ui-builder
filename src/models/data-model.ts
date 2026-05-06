@@ -74,7 +74,7 @@ export abstract class DataModel<T> {
     for (const [field, opts] of Object.entries(meta)) {
       // if (!opts.hidden && field in json) {
         // @ts-ignore
-        instance[field] = json[field] || null;
+        instance[field] = json[field] ?? null;
       // }
     }
 
