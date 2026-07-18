@@ -176,50 +176,55 @@ watch(() => filters, () => {
 
     <!-- Table -->
     <component :is="theme?.components?.table || 'table'" :class="theme?.classes?.table || 'datatable-table'">
-      <component :is="theme?.components?.thead || 'thead'" :class="theme?.classes?.thead">
-        <component :is="theme?.components?.headerRow || 'tr'" :class="theme?.classes?.headerRow || 'datatable-header-row'">
-          <component
-            :is="theme?.components?.headerCell || 'th'"
-            v-if="selectedRows"
-            :class="theme?.classes?.headerCell || 'datatable-header-cell'"
-          >
+      <slot name="table.header" 
+        :row="{
+          columns, actions: rowActions
+        }"
+      >
+        <component :is="theme?.components?.thead || 'thead'" :class="theme?.classes?.thead">
+          <component :is="theme?.components?.headerRow || 'tr'" :class="theme?.classes?.headerRow || 'datatable-header-row'">
             <component
-              :is="theme?.components?.rowSelector || 'input'"
-              type="checkbox"
-              :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
-              v-model="headerSelected"
-              :partialSelection="!allSelected"
-              @change="selectAllRows"
-            />
-          </component>
-          <component
-            :is="theme?.components?.headerCell || 'th'"
-            v-if="showCount"
-            :class="theme?.classes?.headerCell || 'datatable-header-cell'"
-          >
-            S/N
-          </component>
-          <component
-            :is="theme?.components?.headerCell || 'th'"
-            v-for="(col, i) in columns"
-            :key="i"
-            :class="typeof col === 'string' ? theme?.classes?.headerCell || 'datatable-header-cell' : col.headerClass || theme?.classes?.headerCell || 'datatable-header-cell'"
-          >
-            <slot :name="`header.${typeof col === 'string' ? col : col.field}`" :col="col">
-              {{ typeof col === 'string' ? col : col.header || col.field }}
-            </slot>
-          </component>
-          <component
-            :is="theme?.components?.headerCell || 'th'"
-            v-if="rowActions?.length"
-            :class="theme?.classes?.headerCell || 'datatable-header-cell'"
-            style="text-align: end;"
-          >
-            Actions
+              :is="theme?.components?.headerCell || 'th'"
+              v-if="selectedRows"
+              :class="theme?.classes?.headerCell || 'datatable-header-cell'"
+            >
+              <component
+                :is="theme?.components?.rowSelector || 'input'"
+                type="checkbox"
+                :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
+                v-model="headerSelected"
+                :partialSelection="!allSelected"
+                @change="selectAllRows"
+              />
+            </component>
+            <component
+              :is="theme?.components?.headerCell || 'th'"
+              v-if="showCount"
+              :class="theme?.classes?.headerCell || 'datatable-header-cell'"
+            >
+              S/N
+            </component>
+            <component
+              :is="theme?.components?.headerCell || 'th'"
+              v-for="(col, i) in columns"
+              :key="i"
+              :class="typeof col === 'string' ? theme?.classes?.headerCell || 'datatable-header-cell' : col.headerClass || theme?.classes?.headerCell || 'datatable-header-cell'"
+            >
+              <slot :name="`header.${typeof col === 'string' ? col : col.field}`" :col="col">
+                {{ typeof col === 'string' ? col : col.header || col.field }}
+              </slot>
+            </component>
+            <component
+              :is="theme?.components?.headerCell || 'th'"
+              v-if="rowActions?.length"
+              :class="theme?.classes?.headerCell || 'datatable-header-cell'"
+              style="text-align: end;"
+            >
+              Actions
+            </component>
           </component>
         </component>
-      </component>
-
+      </slot>
       <component :is="theme?.components?.tbody || 'tbody'" :class="theme?.classes?.tbody">
         <component
           :is="theme?.components?.row || 'tr'"
@@ -228,71 +233,77 @@ watch(() => filters, () => {
           :key="rIndex"
           :class="theme?.classes?.row || 'datatable-body-row'"
         >
-          <component
-            :is="theme?.components?.cell || 'td'"
-            v-if="selectedRows"
-            :class="theme?.classes?.headerCell || 'datatable-body-cell'"
+          <slot name="table.row" 
+            :row="{
+              row, columns, index: rIndex, actions: rowActions
+            }"
           >
             <component
-              :is="theme?.components?.rowSelector || 'input'"
-              type="checkbox"
-              :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
-              v-model="rowsSelected[row.id]"
-            />
-          </component>
-          <component
-            :is="theme?.components?.cell || 'td'"
-            v-if="showCount"
-            :class="theme?.classes?.cell || 'datatable-body-cell'"
-          >
-            {{ (pagination? (pagination.pageSize * (pagination.page - 1)) : 0) + (rIndex + 1) }}
-          </component>
-          <component
-            :is="theme?.components?.cell || 'td'"
-            v-for="(col, cIndex) in columns"
-            :key="cIndex"
-            :class="typeof col === 'string' ? theme?.classes?.cell || 'datatable-body-cell' : col.rowClass || theme?.classes?.cell || 'datatable-body-cell'"
-          >
-            <!-- ✅ This slot renders either custom content or fallback -->
-            <slot
-              :name="`cell.${typeof col === 'string' ? col : col.field}`"
-              :row="row"
-            >
-              {{ fieldValue(col, row) }}
-            </slot>
-          </component>
-          <component
-            :is="theme?.components?.cell || 'td'"
-            v-if="rowActions?.length"
-            :class="theme?.classes?.cell || 'datatable-body-cell'"
-            style="text-align: end;"
-          >
-            <slot
-              name="actions"
-              :row="row"
+              :is="theme?.components?.cell || 'td'"
+              v-if="selectedRows"
+              :class="theme?.classes?.headerCell || 'datatable-body-cell'"
             >
               <component
-                v-if="theme?.components?.rowActions"
-                :is="theme?.components?.rowActions"
-                :actions="rowActions"
-                :data="row"
+                :is="theme?.components?.rowSelector || 'input'"
+                type="checkbox"
+                :class="theme?.classes?.rowSelector || 'datatable-row-selector'"
+                v-model="rowsSelected[row.id]"
               />
-              <div
-                v-else
-                v-for="(action, i) in rowActions"
-                :key="i"
+            </component>
+            <component
+              :is="theme?.components?.cell || 'td'"
+              v-if="showCount"
+              :class="theme?.classes?.cell || 'datatable-body-cell'"
+            >
+              {{ (pagination? (pagination.pageSize * (pagination.page - 1)) : 0) + (rIndex + 1) }}
+            </component>
+            <component
+              :is="theme?.components?.cell || 'td'"
+              v-for="(col, cIndex) in columns"
+              :key="cIndex"
+              :class="typeof col === 'string' ? theme?.classes?.cell || 'datatable-body-cell' : col.rowClass || theme?.classes?.cell || 'datatable-body-cell'"
+            >
+              <!-- ✅ This slot renders either custom content or fallback -->
+              <slot
+                :name="`cell.${typeof col === 'string' ? col : col.field}`"
+                :row="row"
+              >
+                {{ fieldValue(col, row) }}
+              </slot>
+            </component>
+            <component
+              :is="theme?.components?.cell || 'td'"
+              v-if="rowActions?.length"
+              :class="theme?.classes?.cell || 'datatable-body-cell'"
+              style="text-align: end;"
+            >
+              <slot
+                name="actions"
+                :row="row"
               >
                 <component
-                  v-if="action.show? action.show() : true"
-                  :is="theme?.components?.button || 'button'"
-                  :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
-                  @click="action.onClick(row)"
+                  v-if="theme?.components?.rowActions"
+                  :is="theme?.components?.rowActions"
+                  :actions="rowActions"
+                  :data="row"
+                />
+                <div
+                  v-else
+                  v-for="(action, i) in rowActions"
+                  :key="i"
                 >
-                  {{ action.label }}
-                </component>
-              </div>
-            </slot>
-          </component>
+                  <component
+                    v-if="action.show? action.show() : true"
+                    :is="theme?.components?.button || 'button'"
+                    :class="action.class || theme?.classes?.button || 'datatable-action-btn'"
+                    @click="action.onClick(row)"
+                  >
+                    {{ action.label }}
+                  </component>
+                </div>
+              </slot>
+            </component>
+          </slot>
         </component>
         <component :is="theme?.components?.row || 'tr'" v-else>
           <component :is="theme?.components?.cell || 'td'" :colspan="columns.length + Number(showCount) + Number(rowActions?.length)" class="text-center">
