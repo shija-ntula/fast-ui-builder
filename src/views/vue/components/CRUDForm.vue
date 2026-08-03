@@ -51,6 +51,7 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: Record<string, any>): void;
   (e: "beforeSubmit", value: Record<string, any>): void;
   (e: "afterSubmit", value: boolean): void;
+  (e: "onResponse", value: Record<string, any>): void;
 }>();
 
 // make a reactive form state
@@ -186,6 +187,7 @@ const onSubmit = async () => {
       : await props.modelValue?.create(formState.value)
   } finally {
     emit('afterSubmit', !!result?.status)
+    emit('onResponse', result?.data)
   }
 }
 
